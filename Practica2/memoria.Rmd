@@ -8,7 +8,6 @@ output:
 
 
 ```{=tex}
-\small
 \subpdfbookmark{Índice}{indice}
 \renewcommand{\contentsname}{Índice}
 \tableofcontents
@@ -90,6 +89,13 @@ Estos son los datos que ha arrojado SonarCloud:
 La diferencia es que las **vulnerabilidades** hacen referencia a código que se ha detectado que puede ser explotado, mientras que los **Security Hotspots** son fragmentos de código que deben ser revisados, ya que aunque no se haya podido determinar a priori si son una vulnerabilidad o no en el escaneo, podrían serlo por lo que deben analizarse de forma manual para determinarlo.
 
 ### 3. Haz cualquier commit para forzar un reanalisis (por ejemplo editando el README.md). Espera a que finalice y vuelve a Sonar. ¿Cual es el estado del proyecto (Passed/Failed)?. ¿A qué crees que se debe? ¿Crees que el numero de vulnerabilidades afecta a dicho veredicto?
+
+Tras editar el archivo README.md, el estado del proyecto es `Failed`. Esto se debe a que para que el estado de un proyecto sea `Passed`, se tienen que cumplir una serie de condiciones de la `Quality Gate`. En este caso específico, las condiciones que no se cumplen son:
+
+- `Reliability Rating`: este apartado hace referencia al número de bugs (errores de código que hacen que no funciones) que se han detectado en el código analizado. En el caso de esta métrica se requiere que el valor no sea menor que `A` y el valor que ha arrojado el análisis del código es de `E` (19 bugs)
+- `Security Rating`: este apartado hace referencia al número de vulnerabilidades (código que puede ser explotado por adversarios) que se han detectado. Esta métrica requiere un valor que no sea menor que `A`, y en este caso el valor obtenido es `E` (27 vulnerabilidades).
+
+Efectivamente el número de vulnerabilidades afecta a dicho veredicto, ya que el hecho de que existan vulnerabilidades hacen que no se pueda obtener una puntuación de `A` (la cual se corresponde con 0 vulnerabilidades). Con los bugs pasa exactamente lo mismo, la puntuación de `A` se obtiene con 0 bugs.
 
 
 ## Preguntas Mitigación
