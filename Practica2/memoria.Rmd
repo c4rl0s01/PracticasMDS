@@ -12,8 +12,16 @@ output:
 \renewcommand{\contentsname}{Índice}
 \tableofcontents
 ```
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 \newpage
+#Enlaces Repositorios
+
+https://github.com/c4rl0s01/PracticasMDS
+https://github.com/c4rl0s01/WebGoat
+
 
 # Expresiones regulares
 
@@ -42,6 +50,27 @@ Se tendrán que imprimir por pantalla usando el lenguaje elegido usando una expr
 
 ### Resolución
 
+Para la resolución del ejercicio, hemos escrito el siguiente código:
+
+```{python, eval=FALSE}
+import re
+
+new = input()
+pattern = r'(\bE[-|\s|\S]?[0-9]{4}[|\s|\-]?[A-Z]{3})|([0-9]{4}[-|\s|\S]?[A-Z]{3}\b)'
+
+x = re.findall(pattern, new)
+
+
+for match in x:
+    if match[1] != '':
+        print(match[1])
+    elif match[0] != '':
+        print(match[0])
+
+
+```
+
+En la anterior expresión regular se diferencian dos grupos, en el primero tendremos que buscar matrículas que comiencen con E y estén seguidas de un guión, espacio o ningún espacio, "[-|\\s|\\S]", a continuación tendrá 4 números "[0-9]\{4\}" seguidos de un espacio, guión o ningún espacio, después de esto deberá tener tres letras mayúsculas "[A-Z]\{3\}". En el último grupo tendremos solamente 4 números "[0-9]\{4\}" seguidos de espacio, guión o ningún espacio, finalizando con tres letras mayúsculas "[A-Z]\{4\}"
 
 ## Ejercicio 3. 
 
@@ -77,7 +106,30 @@ Para cada match encontrado se tendrá que imprimir en el siguiente formato:
   - Para un profesor reportaremos para el ejemplo isaac.lozano@urjc.es “profesor isaac apellido lozano”
   
 ### Resolución
-  
+
+Para la resolución del ejercicio, hemos escrito el siguiente código:
+
+```{python, eval=FALSE}
+import re
+
+new = input()
+
+pattern = r"\b(([a-z]{1,})\.([a-z]{2,})@urjc\.es)|\b(([a-z]{1}) \
+            \.([a-z]{2,})\.([0-9]{4})@alumnos\.urjc\.es)"
+
+results = re.findall(pattern, new)
+
+
+for match in results:
+    if match[0] != "":
+        print("profesor "+match[1]+" apellido "+match[2])
+    else:
+        print("alumno "+match[5]+" matriculado en "+match[6])
+
+```
+
+En este ejercicio tenemos dos grupos principales, el correo de profesor y el correo de alumno. En el grupo del profesor, creamos dos grupos internos que son el nombre el cual está compuesto por letras minúsculas "[a-z]\{1,\}" seguido de un punto, y el siguiente grupo que es el apellido compuesto por letras minúsculas "[a-z]\{1,\}" finalizando con @urjc.es. El segundo grupo principal es el correo de alumnos que también está formado por otros grupos internos, en este caso tres, y son: la letra del nombre "[a-z]\{1\}", seguido de un punto, el apellido "[a-z]\{1,\}" seguido de un punto, y el año de matriculación,"[0-9]\{4\}", finalizando con @alumnos.urjc.es. Para mostrar la salida según el formato pedido, accedemos al grupo con el que hacemos el match.
+
 ## Ejercicio 5.
 
 ### Enunciado
@@ -99,11 +151,41 @@ Para cada calle encontrada se reportara: “CP-Calle-Numero”, por ejemplo: “
 Dado un fichero de logs, transformar cada línea a CSV extrayendo la siguiente información:
 
 	- Nivel de log
-	- Hilo donde se ha producido el log (este hilo se corresponde con letras en mayúscula, minúscula y de números) 
+	- Hilo donde se ha producido el log (este hilo se corresponde
+	  con letras en mayúscula, minúscula y de números) 
 	- Clase responsable de emitir el log
 	- Mensaje de log
 
 ### Resolución
+
+Para la resolución del ejercicio, hemos escrito el siguiente código:
+```{python, eval=FALSE}
+import re
+
+new = input()
+
+pattern = r"([A-Za-z]{1,}).{1,}\[([a-zA-Z0-9]{1,})\]\s+(.{1,}\S)\s+\:\s+(.{1,})"
+
+results = re.search(pattern, new)
+
+if results:
+    level_log = results.group(1)
+    thread_log = results.group(2)
+    class_log = results.group(3)
+    message_log = results.group(4)
+
+    if class_log.__contains__("."):
+        class_split = class_log.split(".")
+        l = len(class_split) - 1
+        class_log = class_split[l]
+
+
+    print(f'"{level_log}","{thread_log}","{class_log}","{message_log}"')
+
+```
+
+En este ejercicio diferenciamos cuatro grupos: nivel, hilo, clase, mensaje. El nivel lo encontramos con las primeras letras que haya en el log y puede contener mayúsculas o minúsculas las veces que sea "[A-Za-z]\{1,\}", con ".\{1,\}" seleccionaremos todo lo contenido en el log hasta encontrar el segundo grupo. El hilo se encuentra entre corchetes y puede contener mayúsculas, minúsculas o números, "[a-zA-Z0-9]\{1,\}", seguido de un número de espacios encontraremos el tercer grupo. La clase cogemos todos los caracteres que haya hasta el siguiente caracter que no  sea un espacio,"(.\{1,\}\\S)", seguido de un número de espacios hasta ":" y unos espacios después encontramos el último grupo. Para el mensaje que se encuentra después de los ":" y espacios, el mensaje será todos los carácteres siguientes hasta terminar el log ".\{1,\}". 
+Para tener el output pedido hemos hecho un tratamiento de la clase, ya que puede contener caracteres y puntos, y solo nos interesa los últimos caracteres, por lo tanto, si contiene puntos, dividimos cada el resultado por cada punto y nos quedamos con el último miembro del array obtenido.
 
 # Integración Continua
 
