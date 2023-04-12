@@ -21,7 +21,7 @@ output:
 
 ### Enunciado
 
-Dado un texto de una sola línea, determinar todos los años (números formados estrictamente por 4 dígitos) que aparecen. Un año es una cadena numérica de longitud 4, con cualquier valor en el rango [0000, 9999]. Se tendran que imprimir por pantalla en el lenguaje deseado usando una expresión regular todos los años que vienen en el texto en orden de aparición, en una línea cada uno.
+Dado un texto de una sola línea, determinar todos los años (números formados estrictamente por 4 dígitos) que aparecen. Un año es una cadena numérica de longitud 4, con cualquier valor en el rango [0000, 9999]. Se tendrán que imprimir por pantalla en el lenguaje deseado usando una expresión regular todos los años que vienen en el texto en orden de aparición, en una línea cada uno.
 
 ### Resolución
 
@@ -33,11 +33,12 @@ Dado un texto de una sola línea, determinar todos los años (números formados 
 ### Enunciado
 
 Dado un texto de una línea, determinar todas las matrículas que aparecen. Una matrícula es una cadena que tiene las siguientes características:
-  - 4 dígitos seguidos de un separador (guion, espacio o nada) y 3 letras en mayusculas al final tal que [0000 - AAA, ..., 9999 - ZZZ].
-  - Las matr´ıculas pueden llevar una E mayuscula delante para indicar que se trata de un vehículo
+
+  - 4 dígitos seguidos de un separador (guion, espacio o nada) y 3 letras en mayúsculas al final tal que [0000 - AAA, ..., 9999 - ZZZ].
+  - Las matrículas pueden llevar una E mayúscula delante para indicar que se trata de un vehículo
 especial. Ejemplos: E1337ZZZ, E-0000 PCB.
-  - Los dígitos pueden estar separadas de las letras utilizando un guion, un espacio, o ningun separador.
-Se tendran que imprimir por pantalla usando el lenguaje elegido usando una expresión regular todas las matrículas que vienen en el texto en orden de aparición
+  - Los dígitos pueden estar separadas de las letras utilizando un guion, un espacio, o ningún separador.
+Se tendrán que imprimir por pantalla usando el lenguaje elegido usando una expresión regular todas las matrículas que vienen en el texto en orden de aparición
 
 ### Resolución
 
@@ -46,7 +47,7 @@ Se tendran que imprimir por pantalla usando el lenguaje elegido usando una expre
 
 ### Enunciado
 
-Dado un formato de fechas yyyy-mm-dd, se pide convertir a dd.mm.yyyy. Para cada match encontrado en los documentos propuestos se tendra que imprimir en el siguiente formato (los rangos de fecha puede ser erroneos, pueden existir un mes 20).
+Dado un formato de fechas yyyy-mm-dd, se pide convertir a dd.mm.yyyy. Para cada match encontrado en los documentos propuestos se tendrá que imprimir en el siguiente formato (los rangos de fecha puede ser erróneos, pueden existir un mes 20).
 
 ### Resolución
   
@@ -56,19 +57,22 @@ Dado un formato de fechas yyyy-mm-dd, se pide convertir a dd.mm.yyyy. Para cada 
 
 ### Enunciado
 
-Dado un texto, determinar cuando se ha encontrado un email de alumno de nuestra universidad “@alumnos.urjc.es” o profesor “@urjc.es”. Los emails de alumnos estan formados del siguiente patrón (puedes asumir que el input siempre estara en minúcula): 
+Dado un texto, determinar cuando se ha encontrado un email de alumno de nuestra universidad “@alumnos.urjc.es” o profesor “@urjc.es”. Los emails de alumnos están formados del siguiente patrón (puedes asumir que el input siempre estará en minúscula): 
+
   - Inicial del usuario, seguido de punto.
   - Apellido del usuario, siempre mayor o igual a 2 caracteres.
-  - Seguidos de un punto y la fecha de matriculacion. ´
+  - Seguidos de un punto y la fecha de matriculación. ´
   - todos finalizan con “@alumnos.urjc.es”.
 
 
 Los correos de los profesores constan de:
+
   - Nombre del profesor seguido de un punto.
   - Apellido del profesor.
   - Finalizando con “@urjc.es”.
 
-Para cada match encontrado se tendra que imprimir en el siguiente formato. 
+Para cada match encontrado se tendrá que imprimir en el siguiente formato:
+
   - Para el caso de prueba i.lozanoo.2015@alumnos.urjc.es reportaremos “alumno lozanoo matriculado en 2015”
   - Para un profesor reportaremos para el ejemplo isaac.lozano@urjc.es “profesor isaac apellido lozano”
   
@@ -78,8 +82,9 @@ Para cada match encontrado se tendra que imprimir en el siguiente formato.
 
 ### Enunciado
 
-Dado un texto devolver las direcciones postales. Una direccion estará compuesta de una calle representada por “C/” o ”Calle” seguido de un espacio con el nombre de la calle (una sola palabra) donde la primera letra debe estar en mayuscula, opcionalmente una coma, un numero arbitrario de espacios, el número en cualquiera de los siguientes formatos (Nº7, nº7, N 7, n 7, 7, Nº 7, nº 7, n7, N7). No es valido Nº7, n º7, ni º7, la N podría estar en mayúculas o minúculas. Seguido, una coma, un número arbitrario de espaciosvy un numero de 5 dígitos correspondiente a un codigo postal. Los nombres de las calles deben poder validar calles de Madrid formadas por una sola palabra, no es necesario que reconozca “Calle Almendro Azul”, porque el nombre de la calle tiene dos palabras en vez de una.
+Dado un texto devolver las direcciones postales. Una dirección estará compuesta de una calle representada por “C/” o ”Calle” seguido de un espacio con el nombre de la calle (una sola palabra) donde la primera letra debe estar en mayúscula, opcionalmente una coma, un numero arbitrario de espacios, el número en cualquiera de los siguientes formatos (Nº7, nº7, N 7, n 7, 7, Nº 7, nº 7, n7, N7). No es valido Nº7, n º7, ni º7, la N podría estar en mayúsculas o minúsculas. Seguido, una coma, un número arbitrario de espacios y un numero de 5 dígitos correspondiente a un código postal. Los nombres de las calles deben poder validar calles de Madrid formadas por una sola palabra, no es necesario que reconozca “Calle Almendro Azul”, porque el nombre de la calle tiene dos palabras en vez de una.
 Ejemplos de casos:
+
   - “C/ Dulcinea Nº 10, 28936”
   - “Calle Dulcinea 10, 28106”
   - “Calle Dulcinea N10, 28091”
@@ -91,7 +96,8 @@ Para cada calle encontrada se reportara: “CP-Calle-Numero”, por ejemplo: “
 
 ### Enunciado
 
-Dado un fichero de logs, transformar cada línea a CSV extrayendo la siguiente informacion:
+Dado un fichero de logs, transformar cada línea a CSV extrayendo la siguiente información:
+
 	- Nivel de log
 	- Hilo donde se ha producido el log (este hilo se corresponde con letras en mayúscula, minúscula y de números) 
 	- Clase responsable de emitir el log
