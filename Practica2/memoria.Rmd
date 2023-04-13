@@ -302,7 +302,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 
 @Autowired
   public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-    auth.userDetailsService(null).passwordEncoder(bCryptPasswordEncoder());
+    auth.userDetailsService(null).passwordEncoder(new BCryptPasswordEncoder());
 }
 ```
 
@@ -312,7 +312,11 @@ Al código anterior le hemos añadido un password encoder que emplea una funció
 
 ### 3. Crea una Pull Request de la nueva rama a la rama principal. ¿Qué opina Sonar de los cambios realizados?
 
-Tras crear la pull request de la nueva rama "bcrypt", Sonar 
+Tras crear la pull request de la nueva rama "developer", Sonar ha realizado el análisis correctamente y no detecta vulnerabilidades en el nuevo código
+
+A continuación, seguimos en la "rama developer" para parchear la segunda vulerabilidad, se hace la nueva pull request, y sonar no detecta vulnerabilidades en el nuevo código.
 
 
 ### 4. Junta (merge) la nueva rama con la rama principal. Una vez finalizado el analisis, ¿qué cambios se han producido en el proyecto? ¿Cuantas vulnerabilidades detecta ahora?
+
+Realizando los merge de cada pull request vemos como cada análisis que realiza sonar le rama main va reduciendo el número de vulnerabilidades, primeramente 29, y después 28.
