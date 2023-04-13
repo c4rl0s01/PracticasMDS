@@ -17,6 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 \newpage
+
 # Enlaces Repositorios
 
 https://github.com/c4rl0s01/PracticasMDS
@@ -34,8 +35,21 @@ Dado un texto de una sola línea, determinar todos los años (números formados 
 
 ### Resolución
 
+El código correspondiente a este ejercicio es el siguiente:
 
+```{python, eval=FALSE, results=FALSE}
+import re
 
+new = input()
+
+pattern = r"\b\d{4}\b"
+
+results = re.findall(pattern, new)
+for match in results:
+    print(match)
+```
+
+En el código anterior, la expresión regular comienza y termina con `\b` (para indicar que debe haber un separador en esos 2 puntos) y en el medio `\d{4}` que hace referencia a que tiene que haber 4 dígitos (cada uno será cualquier número del 0 al 9) para que se cumpla el rango del enunciado `[0000, 9999]`. Esta expresión regular se usa para buscar todas las coincidencias mediante la función `re.findall()` y después mediante un `for` se imprimen todas las coincidencias.
 
 ## Ejercicio 2. 
 
@@ -80,8 +94,26 @@ En la anterior expresión regular se diferencian dos grupos, en el primero tendr
 Dado un formato de fechas yyyy-mm-dd, se pide convertir a dd.mm.yyyy. Para cada match encontrado en los documentos propuestos se tendrá que imprimir en el siguiente formato (los rangos de fecha puede ser erróneos, pueden existir un mes 20).
 
 ### Resolución
-  
-  
+
+El código para realizar este ejercicio es el siguiente:
+
+```{python, eval=FALSE, results=FALSE}
+import re
+
+new = input()
+
+pattern = r"\b(\d{4})-(\d{2})-(\d{2})\b"
+sub_pattern = r'\3.\2.\1'
+results_replaced = re.sub(pattern, sub_pattern, new)
+print(results_replaced)
+```
+
+En este caso se tienen 2 expresiones regulares:
+
+- `pattern`: en esta expresión lo que se hace es buscar fechas en el formato solicitado (yyyy-mm-dd) usando para ello grupos que contienen `\d` para indicar que tiene que haber un dígito, y a continuación de cada `\d` poniendo `{numero}` siendo número la cantidad de dígitos dependiendo de si es el correspondiente al año, mes o día. Además entre los grupos hay guiones (`-`) que es el formato solicitado y `\b` al principio y al final de la expresión indicando que tiene que haber un separador en cada punto.
+- `sub_pattern`: esta expresión se usará para reemplazar todas las fechas con el nuevo formato solicitado (dd.mm.yyyy). Para ello, se usa `\grupo` siendo grupo el número correspondiente a cada grupo para cambiar su orden y poniendo un `.` entre medias de cada grupo ya que es el nuevo caracter de separación.
+
+Una vez vistas las 2 expresiones, se usa la función `re.sub` para reemplazar las fechas que encuentre la primera (`pattern`) con la segunda (`sub_pattern`). Tras eso se imprime el resultado obtenido tras la sustitución.
   
 ## Ejercicio 4.
 
@@ -141,10 +173,39 @@ Ejemplos de casos:
   - “C/ Dulcinea Nº 10, 28936”
   - “Calle Dulcinea 10, 28106”
   - “Calle Dulcinea N10, 28091”
+  
 Para cada calle encontrada se reportara: “CP-Calle-Numero”, por ejemplo: “28926-Dulcinea-10”.
 
 ### Resolución
-	
+
+El código usado para la resolución es el siguiente:
+
+```{python, eval=FALSE, results=FALSE}
+import re
+
+new = input()
+
+pattern = r"\b(C\/|Calle)\s([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+),?\s+" \
+          r"(Nº|nº|N\s|n\s|Nº\s|nº\s|n|N)?(\d+),\s+([0-9]{5})\b"
+results = re.findall(pattern, new)
+for match in results:
+    print(match[4], match[1], match[3], sep='-')
+
+
+```
+
+En este caso la expresión regular utilizada esta compuesta por varias partes que se explican a continuación:
+
+- `\b` al principio y al final para indicar que debe haber un separador en los extremos del contenido que encuentre la expresión.
+- `(c\/|Calle)\s` hace referencia a que se debe comenzar o bien con `C/` o con `Calle` y que a continuación debe haber un espacio `\s`
+- `([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)` es el grupo con el nombre de la calle. La calle debe empezar con una letra mayúscula pudiendo incluir vocales con tilde o la Ñ (lo cual se representa con `[A-ZÁÉÍÓÚÑ]`) seguida de una o más (`+`) letras minúsculas (`[a-záéíóúñ]`).
+- `,?\s+` representa que después del nombre de la calle puede ir opcionalmente una coma (`,?`) y uno o más espacios (`\s+`).
+- `(Nº|nº|N\s|n\s|Nº\s|nº\s|n|N)?` este grupo hace referencia a los formatos que pueden ir delante de los dígitos que representan el número de una calle, y pueden ser opcionales ya que como indica el enunciado el número puede ir solo.
+- `(\d+),\s+` es el grupo que se refiere al número de la calle, es decir uno o más (`+`) dígitos (`\d`) seguidos de una coma (`,`) y un número arbitrario de espacios (`\s+`).
+- `([0-9]{5})` es el último grupo y se refiere a un número de 5 dígitos (`{5}`) del 0 al 9 (`[0-9]`) que indican el código postal.
+
+Como se puede observar en el código, tras la expresión regular, se usa `re.findall()` para encontrar las coincidencias que detecte la expresión. Por cada coincidencia se imprime el código postal (`match[4]`), el nombre de la calle (`match[1]`) y el número de la calle (`match[3]`) separados por un guión.
+
 ## Ejercicio 6. 
 
 ### Enunciado
