@@ -17,9 +17,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 \newpage
-#Enlaces Repositorios
+# Enlaces Repositorios
 
 https://github.com/c4rl0s01/PracticasMDS
+
 https://github.com/c4rl0s01/WebGoat
 
 
@@ -217,9 +218,40 @@ Efectivamente el número de vulnerabilidades afecta a dicho veredicto, ya que el
 
 ### 1. Elige una vulnerabilidad de tipo Blocker o Critical, explica cual es la vulnerabilidad detectada, por qué ha sido detectada (y si realmente es una vulnerabilidad y no un falso positivo).
 
+Para este ejercicio hemos escogido la vulnerabilidad de "Default PasswordEncoder relying on plaintext". La vulnerabilidad ha sido encontrada en el siguiente fragmento de código:
+
+```{java, eval=FALSE}
+
+@Autowired
+  public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+    auth.userDetailsService(userDetailsService);
+  }
+```
+
+Es vulnerable puesto que si nos roban la base de datos de nuestros usuarios y sus contraseñas, las verán en texto plano, y podrán suplantar la identidad de cualquier usuario. Para solucionarla deberíamos almacenarlas hasheadas mediante algoritmos seguros como bcrypt, PBKDF2 o argon que son más modernos a diferencia de MD5 o algún SHA (familia) que son bastante vulnerables a ataques de fuerza bruta.
+
+
 ### 2. Propon una solucion e impleméntela en una nueva rama del repositorio. Explica los cambios que arreglan dicha vulnerabilidad.
 
+Como hemos dicho en el algoritmo anterior, tendremos que usar algún algoritmo de hashing como bcrypt para almacenar el hash de la contraseña. Para ello es adecuado importar las librerías necesarias para que funcione nuestro código.
+
+```{java, eval=FALSE}
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+
+
+@Autowired
+  public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+    auth.userDetailsService(null).passwordEncoder(bCryptPasswordEncoder());
+}
+```
+
+
+Al código anterior le hemos añadido un password encoder que emplea una función con el algoritmo bcrypt para hashear la contraseña.
+
+
 ### 3. Crea una Pull Request de la nueva rama a la rama principal. ¿Qué opina Sonar de los cambios realizados?
+
+Tras crear la pull request de la nueva rama "bcrypt", Sonar 
 
 
 ### 4. Junta (merge) la nueva rama con la rama principal. Una vez finalizado el analisis, ¿qué cambios se han producido en el proyecto? ¿Cuantas vulnerabilidades detecta ahora?
