@@ -111,7 +111,7 @@ print(results_replaced)
 En este caso se tienen 2 expresiones regulares:
 
 - `pattern`: en esta expresión lo que se hace es buscar fechas en el formato solicitado (yyyy-mm-dd) usando para ello grupos que contienen `\d` para indicar que tiene que haber un dígito, y a continuación de cada `\d` poniendo `{numero}` siendo número la cantidad de dígitos dependiendo de si es el correspondiente al año, mes o día. Además entre los grupos hay guiones (`-`) que es el formato solicitado y `\b` al principio y al final de la expresión indicando que tiene que haber un separador en cada punto.
-- `sub_pattern`: esta expresión se usará para reemplazar todas las fechas con el nuevo formato solicitado (dd.mm.yyyy). Para ello, se usa `\grupo` siendo grupo el número correspondiente a cada grupo para cambiar su orden y poniendo un `.` entre medias de cada grupo ya que es el nuevo caracter de separación.
+- `sub_pattern`: esta expresión se usará para reemplazar todas las fechas con el nuevo formato solicitado (dd.mm.yyyy). Para ello, se usa `\grupo` siendo grupo el número correspondiente a cada grupo para cambiar su orden y poniendo un `.` entre medias de cada grupo ya que es el nuevo carácter de separación.
 
 Una vez vistas las 2 expresiones, se usa la función `re.sub` para reemplazar las fechas que encuentre la primera (`pattern`) con la segunda (`sub_pattern`). Tras eso se imprime el resultado obtenido tras la sustitución.
   
@@ -246,7 +246,7 @@ if results:
 
 ```
 
-En este ejercicio diferenciamos cuatro grupos: nivel, hilo, clase, mensaje. El nivel lo encontramos con las primeras letras que haya en el log y puede contener mayúsculas o minúsculas las veces que sea "[A-Za-z]\{1,\}", con ".\{1,\}" seleccionaremos todo lo contenido en el log hasta encontrar el segundo grupo. El hilo se encuentra entre corchetes y puede contener mayúsculas, minúsculas o números, "[a-zA-Z0-9]\{1,\}", seguido de un número de espacios encontraremos el tercer grupo. La clase cogemos todos los caracteres que haya hasta el siguiente caracter que no  sea un espacio,"(.\{1,\}\\S)", seguido de un número de espacios hasta ":" y unos espacios después encontramos el último grupo. Para el mensaje que se encuentra después de los ":" y espacios, el mensaje será todos los carácteres siguientes hasta terminar el log ".\{1,\}". 
+En este ejercicio diferenciamos cuatro grupos: nivel, hilo, clase, mensaje. El nivel lo encontramos con las primeras letras que haya en el log y puede contener mayúsculas o minúsculas las veces que sea "[A-Za-z]\{1,\}", con ".\{1,\}" seleccionaremos todo lo contenido en el log hasta encontrar el segundo grupo. El hilo se encuentra entre corchetes y puede contener mayúsculas, minúsculas o números, "[a-zA-Z0-9]\{1,\}", seguido de un número de espacios encontraremos el tercer grupo. La clase cogemos todos los caracteres que haya hasta el siguiente carácter que no  sea un espacio,"(.\{1,\}\\S)", seguido de un número de espacios hasta ":" y unos espacios después encontramos el último grupo. Para el mensaje que se encuentra después de los ":" y espacios, el mensaje será todos los caracteres siguientes hasta terminar el log ".\{1,\}". 
 Para tener el output pedido hemos hecho un tratamiento de la clase, ya que puede contener caracteres y puntos, y solo nos interesa los últimos caracteres, por lo tanto, si contiene puntos, dividimos cada el resultado por cada punto y nos quedamos con el último miembro del array obtenido.
 
 # Integración Continua
@@ -279,7 +279,7 @@ Efectivamente el número de vulnerabilidades afecta a dicho veredicto, ya que el
 
 ### 1. Elige una vulnerabilidad de tipo Blocker o Critical, explica cual es la vulnerabilidad detectada, por qué ha sido detectada (y si realmente es una vulnerabilidad y no un falso positivo).
 
-Para este ejercicio hemos escogido la vulnerabilidad de "Default PasswordEncoder relying on plaintext". La vulnerabilidad ha sido encontrada en el siguiente fragmento de código:
+Para este ejercicio una de las vulnerabilidades que hemos escogido ha sido la de "Default PasswordEncoder relying on plaintext". La vulnerabilidad ha sido encontrada en el siguiente fragmento de código:
 
 ```{java, eval=FALSE}
 
@@ -291,6 +291,21 @@ Para este ejercicio hemos escogido la vulnerabilidad de "Default PasswordEncoder
 
 Es vulnerable puesto que si nos roban la base de datos de nuestros usuarios y sus contraseñas, las verán en texto plano, y podrán suplantar la identidad de cualquier usuario. Para solucionarla deberíamos almacenarlas hasheadas mediante algoritmos seguros como bcrypt, PBKDF2 o argon que son más modernos a diferencia de MD5 o algún SHA (familia) que son bastante vulnerables a ataques de fuerza bruta.
 
+Otra de las que se han escogido ha sido una de "not construct SQL queries directly from user-controlled data". Dicha vulnerabilidad ha sido encontrada en el siguiente fragmento:
+
+```{java, eval=FALSE, results=FALSE}
+try (var connection = dataSource.getConnection()) {
+      PreparedStatement statement =
+          connection.prepareStatement(
+              "select password from challenge_users where userid = '"
+                  + username_login
+                  + "' and password = '"
+                  + password_login
+                  + "'");
+      ResultSet resultSet = statement.executeQuery();
+```
+
+Es vulnerable ya que permite que el usuario pueda construir consultas cuyo efecto no es el deseado. Podría ser capaz de acceder a recursos de la base de datos para los que no tenga autorización o ejecutar comandos para cambiar el comportamiento de la base de datos.
 
 ### 2. Propon una solucion e impleméntela en una nueva rama del repositorio. Explica los cambios que arreglan dicha vulnerabilidad.
 
@@ -309,12 +324,24 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 
 Al código anterior le hemos añadido un password encoder que emplea una función con el algoritmo bcrypt para hashear la contraseña.
 
+Para solucionar la vulnerabilidad de inyección sql, se van a usar sentencias preparadas. A diferencia de la forma que se estaba ejecutando en el código, en la que la consulta se crea con el input del usuario y después se manda para que la ejecute la base de datos, con las sentencias preparadas lo que se hace es mandar una especie de molde a la base de datos para que valide la consulta que se va a realizar pero sin los parámetros que se van a recibir del usuario. Después, una vez se tiene el input del usuario, se manda a la base de datos para agregarlos a la consulta ya validada. Esto puede prevenir la inyección ya que el input del usuario no hace variar la construcción de la consulta. Esta es la solución que se ha implementado:
+
+```{java, eval=FALSE}
+String query = "SELECT password FROM challenge_users WHERE userid = ? AND password = ?";
+    try (var connection = dataSource.getConnection()) {
+      PreparedStatement statement = connection.prepareStatement(query);
+      statement.setString(1, username_login);
+      statement.setString(2, password_login);
+      ResultSet resultSet = statement.executeQuery(query);
+```
+
+Como se puede observar ahora se prepara la consulta, se determinan los parámetros, y tras eso se ejecuta, pero no se construye directamente con los parámetros del usuario si no que primero se valida y luego se le añaden.
 
 ### 3. Crea una Pull Request de la nueva rama a la rama principal. ¿Qué opina Sonar de los cambios realizados?
 
 Tras crear la pull request de la nueva rama "developer", Sonar ha realizado el análisis correctamente y no detecta vulnerabilidades en el nuevo código
 
-A continuación, seguimos en la "rama developer" para parchear la segunda vulerabilidad, se hace la nueva pull request, y sonar no detecta vulnerabilidades en el nuevo código.
+A continuación, seguimos en la "rama developer" para parchear la segunda vulnerabilidad, se hace la nueva pull request, y sonar no detecta vulnerabilidades en el nuevo código.
 
 
 ### 4. Junta (merge) la nueva rama con la rama principal. Una vez finalizado el analisis, ¿qué cambios se han producido en el proyecto? ¿Cuantas vulnerabilidades detecta ahora?
