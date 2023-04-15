@@ -7,7 +7,14 @@ output:
 ---
 
 
+\begin{center}
+    \includegraphics{urjc.png}
+\end{center}
+
+\newpage
+
 ```{=tex}
+\small
 \subpdfbookmark{Índice}{indice}
 \renewcommand{\contentsname}{Índice}
 \tableofcontents
@@ -248,6 +255,8 @@ if results:
 
 En este ejercicio diferenciamos cuatro grupos: nivel, hilo, clase, mensaje. El nivel lo encontramos con las primeras letras que haya en el log y puede contener mayúsculas o minúsculas las veces que sea "[A-Za-z]\{1,\}", con ".\{1,\}" seleccionaremos todo lo contenido en el log hasta encontrar el segundo grupo. El hilo se encuentra entre corchetes y puede contener mayúsculas, minúsculas o números, "[a-zA-Z0-9]\{1,\}", seguido de un número de espacios encontraremos el tercer grupo. La clase cogemos todos los caracteres que haya hasta el siguiente carácter que no  sea un espacio,"(.\{1,\}\\S)", seguido de un número de espacios hasta ":" y unos espacios después encontramos el último grupo. Para el mensaje que se encuentra después de los ":" y espacios, el mensaje será todos los caracteres siguientes hasta terminar el log ".\{1,\}". 
 Para tener el output pedido hemos hecho un tratamiento de la clase, ya que puede contener caracteres y puntos, y solo nos interesa los últimos caracteres, por lo tanto, si contiene puntos, dividimos cada el resultado por cada punto y nos quedamos con el último miembro del array obtenido.
+
+\newpage
 
 # Integración Continua
 
