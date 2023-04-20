@@ -1,0 +1,79 @@
+---
+title: 'Practica 3: CTF'
+subtitle: "Metodologías de desarrollo seguro - Ingeniería de la Ciberseguridad - 2023"
+author: "Carlos Barahona Pastor y Ángel del Castillo González"
+output: pdf_document
+---
+
+```{=tex}
+\subpdfbookmark{Índice}{indice}
+\renewcommand{\contentsname}{Índice}
+\tableofcontents
+```
+
+\newpage
+
+# Whack-a-mole
+
+## Descripción
+
+
+
+## Detección
+
+
+
+## Explicación
+
+
+
+## Flag
+
+
+
+## Arreglos y mejoras
+
+
+# Blog
+
+## Descripción
+
+
+
+## Detección
+
+
+
+## Explicación
+
+
+
+## Flag
+
+
+
+## Arreglos y mejoras
+
+
+
+# Calculadora
+
+## Descripción
+
+
+
+## Detección
+
+
+
+## Explicación
+
+
+
+## Flag
+
+
+
+## Arreglos y mejoras
+
+
