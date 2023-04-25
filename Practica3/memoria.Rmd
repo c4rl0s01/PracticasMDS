@@ -192,3 +192,164 @@ Para impedir la automatización, se podría intentar usar algún método que com
 ## Arreglos y mejoras
 
 
+# La lotería
+
+## Descripción
+
+En este reto se pide adivinar el siguiente número que va a salir en una página que genera números aleatoriamente,
+
+## Detección
+
+En este caso, la vulnerabilidad que se ha detectado es el uso de la función `Random.nextInt()`. Esta función es vulnerable ya que si se conoce la semilla a partir de la cual se están generando los números, se podrán calcular de la misma forma que lo hace el código de la página. En este caso la página usa como semilla el resultado de la función `System.currentTimeMillis()` (que es la diferencia en milisegundos entre el momento que se llama a la función y la medianoche del 1 de enero de 1970), y al utilizar eso como semilla se podría averiguar el valor exacto de la función ejecutando la misma en la máquina local y restando un milisegundo hasta que los números generados cuadrasen.
+
+## Explicación
+
+```{java, eval=FALSE, results=FALSE}
+package com.lottery.lottery;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import java.util.Random;
+
+
+public class Lottery {
+    private static final int MAX_NUMBER = 1_234_000_100;
+    public static void main(String[] args){
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--remote-allow-origins=*");
+        WebDriver driver = new ChromeDriver(options);
+        int next_number = -1;
+        boolean correct_token = false;
+
+        driver.get("https://r1-ctf-vulnerable.numa.host/");
+        driver.findElement(By.xpath("//button[text()='Start from scratch']")).click();
+        long end = System.currentTimeMillis();
+        driver.findElement(By.className("form-control")).sendKeys("1");
+        driver.findElement(By.xpath("//button[text()='Check']")).click();
+
+        String number_s = driver.findElement(By.xpath("//ul/il")).getText();
+        int number = Integer.parseInt(number_s);
+
+        while (0 < end && !correct_token){
+            Random random = new Random(end);
+            int current_number = random.nextInt(MAX_NUMBER);
+            if (current_number == number){
+                correct_token = true;
+                next_number = random.nextInt(MAX_NUMBER);
+            }
+            end--;
+        }
+
+        driver.get("https://r1-ctf-vulnerable.numa.host/");
+        if (correct_token){
+            driver.findElement(By.className("form-control")).
+                    sendKeys(Integer.toString(next_number));
+            driver.findElement(By.xpath("//button[text()='Check']")).click();
+            String flag = driver.findElement(By.tagName("p")).getText();
+            System.out.println(flag);
+        }
+        else{
+            System.out.println("FLAG not found");
+        }
+        driver.quit();
+    }
+}
+
+
+
+```
+
+Lo primero que se hace es realizar los correspondientes `imports`. Una vez realizados, se crea la clase `Lottery`, la cual contiene una variable privada, final, y estática llamada `MAX_NUMBER` que marca el rango en el que se generan números aleatorios. A continuación se tiene la función `main` que consta de varias partes que se describirán a continuación.
+
+### Variables iniciales
+
+```{java, eval=FALSE, results=FALSE}
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--remote-allow-origins=*");
+        WebDriver driver = new ChromeDriver(options);
+        int next_number = -1;
+        boolean correct_token = false;
+```
+
+Las variables iniciales son las siguientes:
+
+- Una variable `options` de tipo `ChromeOptions` para añadir como argumento \textbf{options.addArguments("--remote-allow-origins=*");} (esto es necesario debido a que si no se habilitan los orígenes remotos, no se puede establecer la conexión con la página del reto ya que aparecerá un mensaje `403 Forbidden`).
+- Una variable `driver` de tipo `WebDriver` con las opciones establecidas previamente para poder manejar el navegador automáticamente de la siguiente forma `WebDriver driver = new ChromeDriver(options);`.
+- Una variable `next_number` puesta a `-1` que será la que almacene el siguiente número a introducir en la página.
+- Una variable `correct_token` puesta a `false` que será la que marque si se ha encontrado el `token` correcto con el que generar los números.
+
+### Prueba para obtener el primer número
+
+```{java, eval=FALSE, results=FALSE}
+        driver.get("https://r1-ctf-vulnerable.numa.host/");
+        driver.findElement(By.xpath("//button[text()='Start from scratch']")).click();
+        long end = System.currentTimeMillis();
+        driver.findElement(By.className("form-control")).sendKeys("1");
+        driver.findElement(By.xpath("//button[text()='Check']")).click();
+
+        String number_s = driver.findElement(By.xpath("//ul/il")).getText();
+        int number = Integer.parseInt(number_s);
+```
+
+Lo primero que se hace es entrar a la página principal usando \textbf{driver.get("https://r1-ctf-vulnerable.numa.host/");}. Nada más entrar a la página aparece un recuadro donde escribir el número que se desea comprobar, un botón de `check` y un botón que dice `Start from scratch`. Este último botón lo que hace es reiniciar el generador de números aleatorios usando como semilla la función `System.currentTimeMillis()` como ya se ha comentado previamente, por lo que se hará click en ese botón mediante \textbf{driver.findElement(By.xpath("//button[text()='Start from scratch']")).click();}. 
+
+Justo después de hacer `click` se crea una variable `end` a la que se le asignan los milisegundos actuales haciendo `long end = System.currentTimeMillis();`
+
+\begin{quote}
+\textit {Cuando se hace click en el botón, la máquina de la página obtiene la hora en milisegundos, sin embargo no se puede saber el milisegundo exacto que ha devuelto la función. Es necesario por tanto llamar a esa función desde el código (que devolverá una cantidad en milisegundos mayor) para así más tarde en un \texttt{while} irle restando 1 milisegundo en cada iteración hasta dar con el milisegundo que coincida.}
+\end{quote}
+
+Tras eso lo que se hace es escribir un número cualquiera (1 en este caso) en el campo de `input` de la página, lo cual se puede hacer usando `driver.findElement(By.className("form-control")).sendKeys("1");`. Una vez rellenado el formulario, se hace click en el botón `check` para mandarlo mediante `driver.findElement(B`  
+`y.xpath("//button[text()='Check']")).click();`.
+
+La página que se devuelve contiene el número correcto que se tendría que haber adivinado, por lo que se obtiene ese número mediante `String number_s = driver.findElement(By.xpath("//ul/il")).getText();` y se transforma a entero haciendo `int number = Integer.parseInt(number_s);`.
+
+### Bucle while
+
+```{java, eval=FALSE, results=FALSE}
+        while (0 < end && !correct_token){
+            Random random = new Random(end);
+            int current_number = random.nextInt(MAX_NUMBER);
+            if (current_number == number){
+                correct_token = true;
+                next_number = random.nextInt(MAX_NUMBER);
+            }
+            end--;
+        }
+```
+
+Una vez se tiene el número, se ejecuta un `while` mientras que `end` sea mayor que 0 (`end` no debería de ser mayor que los milisegundos obtenidos en la máquina de la página pero se pone ese límite por si hubiera algún problema para que no itere de forma infinita) y mientras que `!correct_token`, es decir, mientras que no se haya encontrado el `token` correcto. Una vez explicado eso, el cuerpo del `while` consta de los siguientes elementos:
+
+- Lo primero que se hace es crear una variable `random` (`Random random = new Random(end);`) usando como semilla los milisegundos obtenidos anteriormente (`end`) para generar un número y ver si coincide con el que ha devuelto la página.
+- Tras crear el generador, se crea una variable `current_number` a la que se le asigna el resultado de la función `random.nextInt(MAX_NUMBER)`. Esta función devuelve siempre el mismo número aleatorio entre 0 y `MAX_NUMBER` usando una semilla determinada (por eso la función es insegura si se conoce la semilla).
+- Una vez se obtiene el número, se compara con el que devolvió la página, y si son iguales significará que la semilla que se está probando ahora es la misma que la que usó la máquina de la página para crear el generador por lo que se pone `current_token = true` para indicar que se ha encontrado la semilla y se guarda en `next_number` el resultado de `random.nextInt(MAX_NUMBER)` (que será el siguiente número que está esperando la página).
+- Por último se le resta 1 a `end` haciendo `end--;` para que el bucle se siga ejecutando en caso de que todavía no se hubiese encontrado la semilla correcta.
+
+### Comprobación de resultados y obtención de la flag
+
+```{java, eval=FALSE, results=FALSE}
+        driver.get("https://r1-ctf-vulnerable.numa.host/");
+        if (correct_token){
+            driver.findElement(By.className("form-control")).
+                    sendKeys(Integer.toString(next_number));
+            driver.findElement(By.xpath("//button[text()='Check']")).click();
+            String flag = driver.findElement(By.tagName("p")).getText();
+            System.out.println(flag);
+        }
+        else{
+            System.out.println("FLAG not found");
+        }
+        driver.quit();
+```
+
+Tras el `while`, lo primero que se hace es volver a la página principal haciendo \textbf{driver.get("https://r1-ctf-vulnerable.numa.host/");} y una vez en la página principal se comprueba mediante un `if` el valor de `current_token`. Si `current_token` es `true` significará que se ha encontrado la semilla correcta, por lo que se introduce el número (transformado a texto) obtenido en el `while` anterior (que será el siguiente número correcto que esperará la página) mediante `driver.findElement(By.className("form-control")).sendKeys(Integ`  
+`er.toString(next_number));`. Tras eso se hace click en el botón de `check` y se obtiene la `flag` extrayéndola de la página devuelta mediante `String flag = driver.findElement(By.tagName("p")).getText();`. Una vez obtenida se imprime mediante `System.out.println(flag);`. En caso de que no se hubiera encontrado la semilla se imprime por pantalla que no se ha encontrado la flag mediante `System.out.println("FLAG not found");`. Por último se usa `driver.quit();` para cerrar el navegador de `Chrome`.
+ 
+## Flag
+
+La flag en este caso es: **URJC{Ahora_prueba_con_los_numeros_de_la_loteria_:D}**
+
+## Arreglos y mejoras
+
+Para arreglar la vulnerabilidad, habría que utilizar un generador de números aleatorios seguros como la clase `SecureRandom` de `Java`cuya generación garantiza que los números sean criptográficamente seguros.
