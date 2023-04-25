@@ -1,10 +1,15 @@
 ---
-title: 'Practica 3: CTF'
+title: 'Práctica 3: CTF'
 subtitle: "Metodologías de desarrollo seguro - Ingeniería de la Ciberseguridad - 2023"
 author: "Carlos Barahona Pastor y Ángel del Castillo González"
 output: pdf_document
 ---
+\begin{center}
+    \includegraphics{urjc.png}
+\end{center}
 
+
+\newpage
 ```{=tex}
 \subpdfbookmark{Índice}{indice}
 \renewcommand{\contentsname}{Índice}
@@ -16,22 +21,103 @@ output: pdf_document
 # Whack-a-mole
 
 ## Descripción
-
-
-
-## Detección
-
+Se trata del juego de whack-a-mole. El cuál consiste en un cuadrado de madrigueras de los cuales van saliendo topos ("moles") y hay que "machacarlos" para obtener puntos.
 
 
 ## Explicación
 
+El código empleado para la resolución es el siguiente:
 
+```{python, eval=FALSE, results=FALSE}
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+
+def whack_a_mole(driver):
+    driver.get("http://localhost")
+
+    puntos = WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.ID, "score")))
+    while int(puntos.text) < 10001:
+        try:
+            topo = driver.find_element(By.CLASS_NAME, "mole")
+            topo.click()
+        except:
+            pass
+
+    flag = driver.find_element(By.ID, "flag")
+    flag = flag.text
+
+    print(str(flag))
+
+
+
+if __name__ == '__main__':
+    driver = webdriver.Chrome()
+    whack_a_mole(driver)
+    driver.quit()
+    
+```
+
+
+### Main
+
+El código "Main" es el siguiente:
+
+```{python, eval=FALSE, results=FALSE}
+if __name__ == '__main__':
+    driver = webdriver.Chrome()
+    whack_a_mole(driver)
+    driver.quit()
+```
+
+- Primeramente creamos una variable driver que contiene un `webdriver` para Chrome con el que manejaremos el navegador.
+- LLamamos a la función "whack_a_mole" a la que le pasamos el driver para poder completar el juego.
+- Por el último llamamos a "quit" para acabar con la sesión del webdriver.
+
+
+### Whack-a-mole
+
+Primeramente hemos levantado el reto en un servidor HTTP en local
+
+```{python, eval=FALSE, results=FALSE}
+
+
+def whack_a_mole(driver):
+    driver.get("http://localhost")
+
+    puntos = WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.ID, "score")))
+    while int(puntos.text) < 10001:
+        try:
+            topo = driver.find_element(By.CLASS_NAME, "mole")
+            topo.click()
+        except:
+            pass
+
+    flag = driver.find_element(By.ID, "flag")
+    flag = flag.text
+
+    print(str(flag))
+    
+```
+
+- Comenzamos cargando la página que tenemos levantada en local.
+- Esperamos hasta que encontremos un elemento cuyo `ID` sea `score`, lo almacenamos en la variable, puntos ya que contiene los puntos que vamos consiguiendo.
+- Entramos al bucle while que se ejecuta hasta que lleguemos a 10000 puntos, los necesarios para obtener la flag, para obtener la puntuación accedemos a su atributo `text`, y como es un String, hacemos un cast para pasarlo a int.
+- A continuación, entramos en un `try` que busca las etiquetas que contengas el nombre de clase `mole` y haga click sobre ellas para sumar puntos.
+- El `try, except` se debe que a veces en el bucle while busca las etiquetas de nombre de clase ``mole` y justo en ese momento no hay ninguna, por lo tanto se produce una excepción que la dejamos pasar.
+- Una vez llegado a los 10000 puntos aparece una etiqueta cuyo ID es `flag`, la buscamos, accedemos a su atributo `text` y la mostramos.
 
 ## Flag
 
-
+URJC{S3l3n1Um_M0l3_m0l3}
 
 ## Arreglos y mejoras
+
+??????????????????????????????????????????????
+
+
 
 \newpage
 
@@ -190,6 +276,103 @@ Para impedir la automatización, se podría intentar usar algún método que com
 
 
 ## Arreglos y mejoras
+
+\newpage
+
+
+# 10 Fast Fingers
+
+## Descripción
+
+El reto consta de un texto a escribir en 5 segundos para obtener la flag, realizarlo a mano es un poco "imposible", por eso hemos escrito un código en Python.
+
+
+## Detección
+
+
+
+## Explicación
+
+El código utilizado para la resolución es el siguiente:
+
+```{python, eval=FALSE, results=FALSE}
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+import time
+
+
+
+def fastfingers(driver):
+    driver.get("http://localhost")
+    time.sleep(5)
+    #Hay un contenedor que contiene to el texto a teclear
+    palabras = driver.find_element(By.ID, "textDisplay").text
+    clickear = driver.find_element(By.CLASS_NAME, "text-input")
+
+    clickear.send_keys(palabras)
+    clickear.send_keys(" ")
+    time.sleep(10) #10 segundos pa ver la flag 
+
+
+
+
+if __name__ == '__main__':
+
+    driver = webdriver.Chrome()
+    fastfingers(driver)
+    driver.quit()
+    
+    
+```
+
+
+### Main
+```{python, eval=FALSE, results=FALSE}
+if __name__ == '__main__':
+    driver = webdriver.Chrome()
+    fastfingers(driver)
+    driver.quit()
+```
+
+- Primeramente creamos una variable driver que contiene un `webdriver` para Chrome con el que manejaremos el navegador.
+- LLamamos a la función "fastfingers" a la que le pasamos el driver para poder completar el juego.
+- Por el último llamamos a "quit" para acabar con la sesión del webdriver.
+
+
+### Fastfingers
+
+Primeramente hemos levantado el reto en un servidor HTTP en local
+
+```{python, eval=FALSE, results=FALSE}
+def fastfingers(driver):
+    driver.get("http://localhost")
+    time.sleep(5)
+    #Hay un contenedor que contiene to el texto a teclear
+    palabras = driver.find_element(By.ID, "textDisplay").text
+    clickear = driver.find_element(By.CLASS_NAME, "text-input")
+
+    clickear.send_keys(palabras)
+    clickear.send_keys(" ")
+    time.sleep(10) #10 segundos pa ver la flag 
+
+
+```
+
+- Primero cargamos la página principal del reto que tenemos levantado en el local.
+- Ponemos a dormir 5 segundos el programa para que cargue todo correctamente.
+- A continuación, buscamos el texto a introducir en la etiqueta cuyo `ID` es `textDisplay` accedemos al atributo `text` y lo almacenamos en la variable "palabras".
+- En la variable clickear buscamos la etiqueta cuyo `class name` sea `text-input`, es por donde vamos a introducir las palabras del reto.
+- Con la función `send_keys(palabras)`, enviamos las palabras como si estuviéramos escribiendo por teclado.
+
+
+## Flag
+
+URJC{m3ch4nic_k3yb04rd?}
+
+
+## Arreglos y mejoras
+
+???????????????????????????????????????
 
 
 # La lotería
@@ -353,3 +536,154 @@ La flag en este caso es: **URJC{Ahora_prueba_con_los_numeros_de_la_loteria_:D}**
 ## Arreglos y mejoras
 
 Para arreglar la vulnerabilidad, habría que utilizar un generador de números aleatorios seguros como la clase `SecureRandom` de `Java`cuya generación garantiza que los números sean criptográficamente seguros.
+
+
+\newpage
+
+
+
+# Agenda
+
+## Descripción
+
+El programa consiste en una agenda de contactos dónde puedes añadir/crear un contacto o pedir que te lo muestre.
+
+## Detección
+
+En la función `show_contact()` podemos buscar un número en la agenda pero solamente se comprueba si el número que leemos es mayor que el tamaño máximo
+
+```{c, eval=FALSE, results=FALSE}
+
+void show_contact(){
+    printf("Que contacto quieres recuperar? Indica su posicion en la agenda.\n");
+    int pos;
+    scanf("%d", &pos);
+
+    if(pos >= SIZE){
+        printf("Posicion invalida! Que tramas?\n");
+        return;
+    }
+
+    printf("El numero de la posicion %d es %s\n", pos, agenda[pos]);
+}
+
+```
+
+Pero, ¿qué pasa si metemos números negativos?
+
+## Explicación
+
+Si metemos valores negativos, podremos acceder a zonas de memoria, las cuales no deberíamos acceder.
+\begin{center}
+    \includegraphics{intentos.jpg}
+\end{center}
+
+
+\begin{center}
+    \includegraphics{intento_y_flag.jpg}
+\end{center}
+
+
+## Flag
+
+URJC{Why_so_negative}
+
+## Arreglos y mejoras
+
+Deberíamos añadir la comprobación de que el número leído para buscar sea mayor o igual que 0, para que no se accedan a otras direcciones de memoria.
+
+```{c, results=FALSE, eval=FALSE}
+void show_contact(){
+    printf("Que contacto quieres recuperar? Indica su posicion en la agenda.\n");
+    int pos;
+    scanf("%d", &pos);
+
+    if(pos >= SIZE || pos < 0){
+        printf("Posicion invalida! Que tramas?\n");
+        return;
+    }
+
+    printf("El numero de la posicion %d es %s\n", pos, agenda[pos]);
+}
+
+```
+
+Si se cumplen una de las dos condiciones, no devuelve ningún contacto.
+
+
+\newpage
+
+
+
+
+# Agenda v2
+
+## Descripción
+El programa consiste en una agenda de contactos dónde puedes añadir/crear un contacto o pedir que te lo muestre.
+
+## Detección
+
+Según la [documentación de python](https://docs.python.org/2/library/functions.html#input), la función input realiza por debajo lo siguiente: `eval(raw_input(prompt))`.
+
+\begin{center}
+    \includegraphics{doc.jpg}
+\end{center}
+
+El método `eval()` puede ser usado para ejecutar código arbitrario, por lo tanto `input()` en Python2 es vulnerable.
+Por ejemplo, la siguiente parte del código podemos intentar ejecutar código.
+
+```{python, eval=FALSE, results=FALSE}
+import os
+
+def add_contact():
+    print("En que posicion de la agenda quieres almacenar el numero?\n")
+    pos = int(input())
+
+    if pos >= SIZE or pos < 0:
+        print("Posicion invalida! Quieres hacer un overflow?\n")
+        return
+
+
+    print("Introduce el numero: ")
+    agenda[pos] = input()
+
+
+```
+
+
+Además, el código importa la librería `os` con la que podemos acceder a variables de entorno como `CHALLENGE_FLAG` que es donde se guarda la flag del reto.
+
+
+```{docker, eval=FALSE, results=FALSE}
+environment:
+      - CHALLENGE_FLAG=URJC{change_me}
+
+```
+
+
+## Explicación
+
+Como hemos dicho antes la función input es vulnerable, entonces si introducimos la siguiente línea en cualquier parte que ejecute input: `os.getenv('CHALLENGE_FLAG')` para obtener el contenido de la variable de entorno de la flag. 
+
+\begin{center}
+    \includegraphics{cuela.jpg}
+\end{center}
+
+
+\begin{center}
+    \includegraphics{flag_python.jpg}
+\end{center}
+
+
+## Flag
+
+URJC{Python2_is_old}
+
+## Arreglos y mejoras
+
+Usar raw_input() como método para leer inputs en Python2 ya que todo lo recibe lo convierte en strings. Otra opción es dejar de usar Python2 y empezar a usar Python3 cuya función input no es vulnerable.
+
+
+
+
+
