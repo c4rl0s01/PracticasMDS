@@ -1482,18 +1482,52 @@ Este reto posee muchas trabas para impedir la inyección (comprobación de longi
 
 # Minichell
 
-
-
 ## Descripción
 
-## Detección
+En este reto se pedía utilizar la herramienta `AFL` para detectar errores en la minishell que se desarrolló previamente.
 
 ## Explicación
 
+Tras instalar la herramienta `AFL`, se han generado 5 casos de prueba:
 
+\begin{figure}[!ht]
+  \centering
+  \includegraphics{./capturas/test_cases_content.png}
+  \caption{cat ./*}
+\end{figure}
+
+Tras eso se ha usado `~/AFL/afl-gcc -Wall -Wextra ../minishell.c ../libparser.a -o minishell -static` para compilar con `AFl` la minishell y se ha realizado un `fuzzing` de unos 15 minutos mediante `~/AFL/afl-fuzz -i ../test_cases/ -o ../output/ ./minishell`:
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics{./capturas/afl_results.png}
+  \caption{afl results}
+\end{figure}
+
+Como se observa se han detectado 24 `crashes` únicos los cuales se pueden ver entrando a la carpeta `/output/crashes`:
+
+\newpage
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics{./capturas/crashes_cat.png}
+  \caption{\texttt{for f in `ls`; do echo -e "\$f\\n`cat \$f`\\n"; done}}
+\end{figure}
+
+La mayoría de errores se corresponden con fallos de sintaxis en mandatos o argumentos que arrojan `Syntax error checking Segmentation fault (core dumped)` (Signal 11) tal y como se puede apreciar en estos ejemplos:
+
+\newpage
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics{./capturas/crashes_test.png}
+  \caption{crashes tests}
+\end{figure}
 
 ## Flag
 
-
+No hay flag en este reto.
 
 ## Arreglos y mejoras
+
+Como mejora se podrían crear funciones que comprobasen `inputs` que arrojen el problema de `Syntax error checking` para así poder tratarlos y que no se terminara el proceso de la `minishell`. Además de eso se podría crear un `signalHandler` específico que comprobara si esa señal 11 ha sido enviada debido a un error de sintaxis y en caso de ser así volviera a la minishell sin que llegara a cerrarse.
