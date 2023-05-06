@@ -23,6 +23,14 @@ output: pdf_document
 ## Descripción
 Se trata del juego de whack-a-mole. El cuál consiste en un cuadrado de madrigueras de los cuales van saliendo topos ("moles") y hay que "machacarlos" para obtener puntos.
 
+## Detección
+
+Si vemos el código cuando se ejecuta el js del reto, vemos que cada vez que aparece un topo, se crea una etiqueta cuya clase es "mole"
+
+\begin{center}
+    \includegraphics{./capturas/clase_mole.jpg}
+\end{center}
+
 
 ## Explicación
 
@@ -115,8 +123,7 @@ URJC{S3l3n1Um_M0l3_m0l3}
 
 ## Arreglos y mejoras
 
-??????????????????????????????????????????????
-
+Se debería cambiar el nombre de la nueva clase, es decir, cuando sale un topo aparece la clase "mole", haciendo que sea muy vistoso cómo se crean o aparecen estos topos. Si fuera posible crear una lista por instancia de clases con nombres aleatorios, y ésa lista se vacíe cuando los topos desaparezcan.
 
 
 \newpage
@@ -269,7 +276,25 @@ El reto consta de un texto a escribir en 5 segundos para obtener la flag, realiz
 
 ## Detección
 
+Tenemos la siguiente etiqueta que contiene el texto a escribir:
 
+```{html, eval=FALSE, results=FALSE}
+
+<div class="text-display" id="textDisplay">
+</div>
+
+```
+
+
+Y luego el botón para "enviar" la palabra seleccionada
+
+
+```{html, eval=FALSE, results=FALSE}
+<div class="input-area center">
+   <textarea rows="1" class="text-input" id="textInput" ></textarea> 
+   #hay más en la etiqueta, no entra en el cuadro
+</div>
+```
 
 ## Explicación
 
@@ -352,7 +377,9 @@ URJC{m3ch4nic_k3yb04rd?}
 
 ## Arreglos y mejoras
 
-???????????????????????????????????????
+Se podría aleatorizar las palabras de manera que se tenga que escribir una palabra del medio o una del final, algo que no siga un orden.
+
+
 
 \newpage
 
@@ -498,6 +525,8 @@ URJC{Python2_is_old}
 ## Arreglos y mejoras
 
 Usar raw_input() como método para leer inputs en Python2 ya que todo lo recibe lo convierte en strings. Otra opción es dejar de usar Python2 y empezar a usar Python3 cuya función input no es vulnerable.
+
+\newpage
 
 
 # La calculadora
@@ -751,6 +780,9 @@ La flag en este caso es: **URJC{13377269}**
 
 Como posible mejora para aumentar la dificultad del reto, se podría intentar ofuscar aun más el código y utilizar más código que no haga nada (como el que hay en la función que siempre devuelve 1) para dificultar la comprensión.
 
+
+\newpage
+
 # Bitcoins
 
 ## Descripción
@@ -835,6 +867,7 @@ En este caso la `flag` sería: **URJC{Ojala_funcionara_con_el_banco}**
 La vulnerabilidad encontrada en este caso es un overflow de `int`, por lo que para arreglarla, se podría hacer algo parecido a lo que se hizo en el reto de la calculadora casteando los valores de `int` a `long` para que así hubiese un rango de valores suficientes y nunca saliera un valor negativo al realizar la operación
 
 
+\newpage
 
 # La lotería
 
@@ -1053,6 +1086,10 @@ La flag sería por tanto: **URJC{Mejor_ponerlo_en_Github_Secret}**
 ## Arreglos y mejoras
 
 La "vulnerabilidad" en este caso sería que la flag está `hardcodeada` en uno de los archivos del proyecto y `sonar` la ha detectado, por lo que una posible solución podría ser integrarla de una forma más indetectable en el código y volver a pasar el proyecto por `sonar` para comprobar si la sigue detectando.
+
+
+\newpage
+
 
 # El directorio
 
@@ -1439,6 +1476,9 @@ La flag de este reto es por tanto: **URJC{w0w_such_vuln_chain}**
 ## Arreglos y mejoras
 
 Este reto posee muchas trabas para impedir la inyección (comprobación de longitud, filtro de caracteres, tiempo, etc) no obstante como se ha podido observar es posible realizarla. Para arreglar la vulnerabilidad una de las cosas que se podrían hacer es en vez de filtrar los caracteres de esa forma filtrar también los caracteres en puntos del código donde se produzca la conversión de `Unicode` a su respectivo caracter para poder detectarlos. Otra de las cosas que se podrían hacer es usar `prepared statements` para todas las entradas del usuario y no solo para el campo `text`, evitando de esa forma que se pueda inyectar código en la `query`.  
+
+
+\newpage
 
 # Minichell
 
