@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.mockito.Mockito.*;
@@ -49,10 +48,11 @@ public class SecureCalculatorTests {
     @Test
     public void random_test(){
         SecureCalculator calculator = new SecureCalculator();
-        int result = calculator.getRandomNumber(9876);
-        int result2 = calculator.getRandomNumber(9876);
-        Assertions.assertTrue(0 <= result && result < Integer.MAX_VALUE);
-        Assertions.assertTrue(0 <= result2 && result2 < Integer.MAX_VALUE);
+        int bound = 9876;
+        int result = calculator.getRandomNumber(bound);
+        int result2 = calculator.getRandomNumber(bound);
+        Assertions.assertTrue(0 <= result && result < bound);
+        Assertions.assertTrue(0 <= result2 && result2 < bound);
         Assertions.assertTrue(result != result2);
 
     }
@@ -92,20 +92,6 @@ public class SecureCalculatorTests {
         int result = calculator.getRandomNumber();
     }
 
-    static class TestLogger extends Logger {
-        int nVecesLlamado;
-        protected TestLogger(String name, String resourceBundleName){
-            super(name, resourceBundleName);
-        }
-        protected TestLogger(){
-            super("fakename", null);
-        }
-        @Override
-        public void log(Level level, String msg){
-            nVecesLlamado++;
-        }
-
-    }
     @Test
     void check_logger(){
         var mockLog = Mockito.mock(Logger.class);

@@ -81,8 +81,8 @@ if __name__ == '__main__':
 ```
 
 - Primeramente creamos una variable driver que contiene un `webdriver` para Chrome con el que manejaremos el navegador.
-- LLamamos a la función "whack_a_mole" a la que le pasamos el driver para poder completar el juego.
-- Por el último llamamos a "quit" para acabar con la sesión del webdriver.
+- Llamamos a la función "whack_a_mole" a la que le pasamos el driver para poder completar el juego.
+- Por último llamamos a "quit" para acabar con la sesión del webdriver.
 
 
 ### Whack-a-mole
@@ -340,7 +340,7 @@ if __name__ == '__main__':
 ```
 
 - Primeramente creamos una variable driver que contiene un `webdriver` para Chrome con el que manejaremos el navegador.
-- LLamamos a la función "fastfingers" a la que le pasamos el driver para poder completar el juego.
+- Llamamos a la función "fastfingers" a la que le pasamos el driver para poder completar el juego.
 - Por el último llamamos a "quit" para acabar con la sesión del webdriver.
 
 
@@ -570,7 +570,8 @@ El siguiente test que se ha creado es el relativo a `overflows`. En este caso se
     @Test
     public void overflow_test(){
         SecureCalculator calculator = new SecureCalculator();
-        Assertions.assertDoesNotThrow(() -> {calculator.multiply(Integer.MAX_VALUE-1, Integer.MAX_VALUE);});
+        Assertions.assertDoesNotThrow(() -> {calculator.multiply(Integer.MAX_VALUE-1, 
+                                                                 Integer.MAX_VALUE);});
     }
 ```
 
@@ -591,10 +592,11 @@ El siguiente test que se ha realizado es el relativo a detectar que los números
     @Test
     public void random_test(){
         SecureCalculator calculator = new SecureCalculator();
-        int result = calculator.getRandomNumber(9876);
-        int result2 = calculator.getRandomNumber(9876);
-        Assertions.assertTrue(0 <= result && result < Integer.MAX_VALUE);
-        Assertions.assertTrue(0 <= result2 && result2 < Integer.MAX_VALUE);
+        int bound = 9876;
+        int result = calculator.getRandomNumber(bound);
+        int result2 = calculator.getRandomNumber(bound);
+        Assertions.assertTrue(0 <= result && result < bound);
+        Assertions.assertTrue(0 <= result2 && result2 < bound);
         Assertions.assertTrue(result != result2);
 
     }
@@ -661,7 +663,7 @@ Lo siguiente que se crea es el test para verificar que se distingue correctament
     }
 ```
 
-En este caso el código no pasa el test ya que la forma de determinar si un número es par es buscarlo en una lista que solo contiene unos cuantos. Por tanto lo que se hace es cambair el código para determinar si es par o no usando el módulo:
+En este caso el código no pasa el test ya que la forma de determinar si un número es par es buscarlo en una lista que solo contiene unos cuantos. Por tanto lo que se hace es cambiar el código para determinar si es par o no usando el módulo:
 
 ```{java, eval=FALSE, results=FALSE}
     public boolean isEven(int a){
@@ -684,7 +686,7 @@ Por último para verificar los logs se crea un test que llame a las 4 funciones 
     }
 ```
 
-EL código pasa el test y se confirman los 4 logs.
+El código pasa el test y se confirman los 4 logs.
 
 ## Flag
 
@@ -692,7 +694,9 @@ La flag de este reto es: **URJC{Ahora_implementate_unas_derivadas}**
 
 ## Arreglos y mejoras
 
-Los arreglos relativos al reto se basan en crear los test de forma correcta y para comprobar las características pedidas y determinar cual es la mejor funcion para cada caso.
+Los arreglos relativos al reto se basan en crear los test de forma correcta y para comprobar las características pedidas y determinar cual es la mejor función para cada caso.
+
+\newpage
 
 # Crash me... if you can
 
@@ -851,6 +855,8 @@ Tal y como se observa en el output que se recibe y en el código para comprar la
 ```
 
 Revisando el código, se observa que no se puede introducir un número negativo, y tampoco se puede comprar nada para lo que no se tenga presupuesto ya que se comprueba que el presupuesto sea mayor que el precio de lo que se va a comprar multiplicado por la cantidad. No obstante, aparentemente no se está comprobando ni evitando el overflow de la multiplicación entre el precio del producto y la variable `cuantas` que es de tipo `int`, por lo que se va a intentar un overflow de esa multiplicación para que el resultado salga negativo y la comparación del presupuesto y de lo que se va a gastar salga `True`. Para ello, cuando se pregunta por la cantidad, se introduce el valor máximo de `int` en `c` (el cual es `INT_MAX=2147483647`). Al introducir ese valor, efectivamente se produce el overflow y se imprime la flag:
+
+\newpage
 
 \begin{figure}[!ht]
   \centering
@@ -1095,7 +1101,7 @@ La "vulnerabilidad" en este caso sería que la flag está `hardcodeada` en uno d
 
 ## Descripción
 
-En este reto se proporciona una página en la cual se pueden buscar empleados. La vulnerabilidad detectada ha sido una `LDAP injection`
+En este reto se proporciona una página en la cual se pueden buscar empleados. La vulnerabilidad detectada ha sido una `LDAP injection`.
 
 ## Detección
 
@@ -1103,7 +1109,7 @@ En este caso la vulnerabilidad se ha encontrado de forma manual observando que e
 
 ## Explicación
 
-La página nada más entrar ofrece un listado de todos los empleados los cuales se han obtenido introduciendo `*` en el campo de búsqueda. Observando el código fuente que se proporciona de la página, se observa que el protocolo utilizado para almacenar los empleados y realizar las búsquedas es `LDAP`. Si presta atención al código fuente, el método que inicializa `LDAP` es la siguiente:
+La página nada más entrar ofrece un listado de todos los empleados los cuales se han obtenido introduciendo `*` en el campo de búsqueda. Observando el código fuente que se proporciona de la página, se observa que el protocolo utilizado para almacenar los empleados y realizar las búsquedas es `LDAP`. Si se presta atención al código fuente, el método que inicializa `LDAP` es la siguiente:
 
 ```{java, eval=FALSE, results=FALSE}
     @PostConstruct
@@ -1279,7 +1285,7 @@ El código referente a esta parte es:
         }
 ```
 
-Esta función lo que hace es descmponer el `JSON` recibido en forma de `String` en sus distintos valores para así poder procesarlos más adelante, es decir, los datos a introducir por el usuario deben cumplir ese formato para ser válidos y poder ser procesados.
+Esta función lo que hace es descomponer el `JSON` recibido en forma de `String` en sus distintos valores para así poder procesarlos más adelante, es decir, los datos a introducir por el usuario deben cumplir ese formato para ser válidos y poder ser procesados.
 
 ### Función de búsqueda (WebController) - Llamada al service
 
@@ -1393,7 +1399,7 @@ El código de la función `modernSave` simplemente crea un objeto de tipo `Searc
 
 Como resumen de lo explicado en los apartados anteriores, aparentemente es posible hacer una inyección ya que la consulta no usa `prepared statements` en todas las entradas del usuario, no obstante para realizarla se tendrían que superar las dificultades vistas previamente. Lo primero que habría que hacer es no superar el límite de tamaño del `input` de `100_000` el cual está puesto ahí para evitar que la ejecución de la búsqueda con la `regex` en el texto tarde más de los 2000 ms necesarios para que se utilice la función vulnerable a la inyección (ya que si se pusiera un `input` muy grande tardaría más de 2000ms si o si), tras eso el input que se envíe tiene que evitar usar los caracteres no permitidos (muy útiles en inyecciones), tiene que tener una sintaxis correcta en cuanto a la deserialización del JSON para que pueda procesarse la búsqueda, tiene que cumplir la sintaxis de las `regex` para que se pueda compilar el patrón, la búsqueda tiene que tardar más de 2 segundos en ejecutarse, y por último el texto tiene que ser válido para la sintaxis SQL y que así se pueda atacar mediante la inyección.
 
-El primer obstáculo en el que se centran los esfuerzos es en superar los 2000 ms para que se produzca la excepción y se use la función `legacySave`. Nada más observar que se ejecuta `legacySave()` si la búsqueda tarda más de 2000 ms en completarse, una de las primeras ideas que se podrían venir es que si se pone un `input` muy grande en el campo `text` la búsqueda tardaría más de ese tiempo y se produciría la excepción, no obstante para eso está puesto el límite de `100_000` comentado previamente. Si se buscan técnicas de ataques con `regex`, una de las que llaman la atención son las llamadas ReDoS (*R*egex *D*enial *o*f *S*ervice). Explicado por encima, este principio se basa en que como normalmente las `regex` tienen una complejidad exponencial en el peor de los casos, si se introduce una `evil regex` la cual analice todos los casos y un `input` al que aplicar la `regex` lo suficientemente grande, el tiempo que se tardará en procesar el texto será más grande que de costumbre y tardará más de los 2000 ms que se necesitan introduciendo un `input` no demasiado grande en comparación con lo que tomaría haciéndolo con una `regex` normal. En este caso la `evil regex` y el texto utilizado han sido:
+El primer obstáculo en el que se centran los esfuerzos es en superar los 2000 ms para que se produzca la excepción y se use la función `legacySave`. Nada más observar que se ejecuta `legacySave()` si la búsqueda tarda más de 2000 ms en completarse, una de las primeras ideas que se podrían venir es que si se pone un `input` muy grande en el campo `text` la búsqueda tardaría más de ese tiempo y se produciría la excepción, no obstante para eso está puesto el límite de `100_000` comentado previamente. Si se buscan técnicas de ataques con `regex`, una de las que llaman la atención son las llamadas ReDoS (**R**egular **e**xpression **D**enial **o**f **S**ervice). Explicado por encima, este principio se basa en que como normalmente las `regex` tienen una complejidad exponencial en el peor de los casos, si se introduce una `evil regex` la cual analice todos los casos y un `input` al que aplicar la `regex` lo suficientemente grande, el tiempo que se tardará en procesar el texto será más grande que de costumbre y tardará más de los 2000 ms que se necesitan introduciendo un `input` no demasiado grande en comparación con lo que tomaría haciéndolo con una `regex` normal. En este caso la `evil regex` y el texto utilizado han sido:
 
 - `Evil regex`: *((a+)+)+\$*
 - `Text`: *aaaaaaaaaaaaaaaaaaaaaaaaaa!*
@@ -1475,7 +1481,7 @@ La flag de este reto es por tanto: **URJC{w0w_such_vuln_chain}**
 
 ## Arreglos y mejoras
 
-Este reto posee muchas trabas para impedir la inyección (comprobación de longitud, filtro de caracteres, tiempo, etc) no obstante como se ha podido observar es posible realizarla. Para arreglar la vulnerabilidad una de las cosas que se podrían hacer es en vez de filtrar los caracteres de esa forma filtrar también los caracteres en puntos del código donde se produzca la conversión de `Unicode` a su respectivo caracter para poder detectarlos. Otra de las cosas que se podrían hacer es usar `prepared statements` para todas las entradas del usuario y no solo para el campo `text`, evitando de esa forma que se pueda inyectar código en la `query`.  
+Este reto posee muchas trabas para impedir la inyección (comprobación de longitud, filtro de caracteres, tiempo, etc) no obstante como se ha podido observar es posible realizarla. Para arreglar la vulnerabilidad una de las cosas que se podrían hacer es en vez de filtrar los caracteres de esa forma filtrar también los caracteres en puntos del código donde se produzca la conversión de `Unicode` a su respectivo carácter para poder detectarlos. Otra de las cosas que se podrían hacer es usar `prepared statements` para todas las entradas del usuario y no solo para el campo `text`, evitando de esa forma que se pueda inyectar código en la `query`.  
 
 
 \newpage
