@@ -18,6 +18,10 @@ output: pdf_document
 
 \newpage
 
+# Enlace Repositorio
+
+https://github.com/c4rl0s01/PracticasMDS/tree/main/Practica3
+
 # Whack-a-mole
 
 ## Descripción
